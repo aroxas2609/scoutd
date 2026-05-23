@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useIsLgScreen } from "@/lib/use-media-query";
 
 export type SheetSelectOption = {
   value: string;
@@ -379,6 +380,7 @@ function SheetSelectDesktop({
 }
 
 export function SheetSelect(props: SheetSelectProps) {
+  const isLgScreen = useIsLgScreen();
   const { allOptions, selectedLabel } = useSheetSelectState(
     props.value,
     props.options,
@@ -390,14 +392,9 @@ export function SheetSelect(props: SheetSelectProps) {
     selectedLabel,
   };
 
-  return (
-    <>
-      <div className="lg:hidden">
-        <SheetSelectMobile {...partsProps} />
-      </div>
-      <div className="hidden lg:block">
-        <SheetSelectDesktop {...partsProps} />
-      </div>
-    </>
-  );
+  if (isLgScreen) {
+    return <SheetSelectDesktop {...partsProps} />;
+  }
+
+  return <SheetSelectMobile {...partsProps} />;
 }

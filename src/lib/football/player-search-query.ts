@@ -1,4 +1,6 @@
 import { isValidAustralianPostcode, normalisePostcode } from "@/lib/football/association-postcodes";
+import type { PostcodeLocationsMap } from "@/lib/geo/location-radius";
+import { getSuburbsForPostcodes } from "@/lib/geo/location-radius";
 
 /** Strip characters that break PostgREST ilike patterns. */
 export function escapeIlikePattern(value: string): string {
@@ -23,6 +25,30 @@ export function buildPlayerLocationOrClause(term: string): string | null {
 
   if (isValidAustralianPostcode(q)) {
     parts.push(`postcode.eq.${normalisePostcode(q)}`);
+  }
+
+  return parts.join(",");
+}
+
+/** PostgREST OR filter for nearby player fetch (postcode, suburb, legacy location text). */
+export function buildNearbyPlayersOrClause(
+  postcodes: string[],
+  locationsMap: PostcodeLocationsMap
+): string | null {
+  if (!postcodes.length) return null;
+
+  const parts: string[] = [`postcode.in.(${postcodes.join(",")})`];
+
+  const suburbs = getSuburbsForPostcodes(postcodes, locationsMap);
+  if (suburbs.length > 0) {
+    const suburbValues = suburbs
+      .map((s) => (/\s/.test(s) ? `"${s.replace(/"/g, "")}"` : s))
+      .join(",");
+    parts.push(`suburb.in.(${suburbValues})`);
+  }
+
+  for (const pc of postcodes.slice(0, 12)) {
+    parts.push(`location.ilike.%${pc}%`, `location_public.ilike.%${pc}%`);
   }
 
   return parts.join(",");

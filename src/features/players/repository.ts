@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  buildNearbyPlayersOrClause,
   buildPlayerSearchOrClause,
   escapeIlikePattern,
 } from "@/lib/football/player-search-query";
@@ -8,6 +9,7 @@ import {
   filterPlayersByRadius,
   getPostcodesWithinRadius,
   sortPlayersByDistance,
+  withOriginPostcode,
   type AssociationPostcodesMap,
   type PostcodeLocationsMap,
   type SearchLocation,
@@ -108,13 +110,20 @@ export async function searchPlayers(
       label: "Club",
       source: "profile",
     };
-    const postcodesInRadius = getPostcodesWithinRadius(
-      coachLocation,
-      filters.radiusKm!,
+    const postcodesInRadius = withOriginPostcode(
+      getPostcodesWithinRadius(
+        coachLocation,
+        filters.radiusKm!,
+        context.locationsMap
+      ),
+      filters.originPostcode
+    );
+    const nearbyOr = buildNearbyPlayersOrClause(
+      postcodesInRadius,
       context.locationsMap
     );
-    if (postcodesInRadius.length > 0) {
-      query = query.in("postcode", postcodesInRadius);
+    if (nearbyOr) {
+      query = query.or(nearbyOr);
     }
     query = query.limit(NEARBY_CANDIDATE_LIMIT);
   } else {
@@ -204,7 +213,8 @@ export async function getNearbyPlayers(
   supabase: SupabaseClient,
   coachLocation: SearchLocation | null,
   context: PlayerSearchContext,
-  radiusKm = DEFAULT_RADIUS_KM
+  radiusKm = DEFAULT_RADIUS_KM,
+  originPostcode?: string | null
 ): Promise<{ data: PlayerWithDistance[]; error: unknown }> {
   if (!coachLocation) {
     return { data: [], error: null };
@@ -216,6 +226,7 @@ export async function getNearbyPlayers(
       radiusKm,
       latitude: coachLocation.lat,
       longitude: coachLocation.lng,
+      originPostcode: originPostcode ?? undefined,
       sortByNearest: true,
     },
     0,

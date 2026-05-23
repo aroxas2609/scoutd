@@ -116,6 +116,28 @@ export function getPostcodesWithinRadius(
   return postcodes;
 }
 
+/** Ensure the club/player postcode is always considered for nearby SQL filters. */
+export function withOriginPostcode(
+  postcodes: string[],
+  originPostcode: string | null | undefined
+): string[] {
+  const normalised = normalisePostcode(originPostcode);
+  if (!normalised || postcodes.includes(normalised)) return postcodes;
+  return [...postcodes, normalised];
+}
+
+export function getSuburbsForPostcodes(
+  postcodes: string[],
+  locationsMap: PostcodeLocationsMap
+): string[] {
+  const suburbs = new Set<string>();
+  for (const pc of postcodes) {
+    const suburb = locationsMap.get(pc)?.suburb?.trim();
+    if (suburb) suburbs.add(suburb);
+  }
+  return [...suburbs];
+}
+
 export function getAssociationCentroid(
   associationId: string | null | undefined,
   locationsMap: PostcodeLocationsMap,
@@ -170,14 +192,20 @@ function fromProfileCoords(
 }
 
 export function getCoachSearchLocation(
-  coach: LocationProfile,
+  coach: LocationProfile & {
+    location?: string | null;
+    location_public?: string | null;
+  },
   locationsMap: PostcodeLocationsMap,
   associationPostcodes: AssociationPostcodesMap
 ): SearchLocation | null {
   const labelParts = [coach.suburb?.trim(), coach.postcode?.trim()].filter(Boolean) as string[];
+  const freeText = coach.location_public ?? coach.location;
   return (
-    fromProfileCoords(coach, labelParts) ??
     getLocationFromPostcode(coach.postcode, locationsMap, coach.suburb) ??
+    getLocationFromSuburbName(coach.suburb, locationsMap) ??
+    getLocationFromFreeText(freeText, locationsMap) ??
+    fromProfileCoords(coach, labelParts) ??
     getAssociationCentroid(coach.association_id, locationsMap, associationPostcodes)
   );
 }
@@ -193,10 +221,10 @@ export function getPlayerSearchLocation(
   const labelParts = [player.suburb?.trim(), player.postcode?.trim()].filter(Boolean) as string[];
   const freeText = player.location_public ?? player.location;
   return (
-    fromProfileCoords(player, labelParts) ??
     getLocationFromPostcode(player.postcode, locationsMap, player.suburb) ??
     getLocationFromSuburbName(player.suburb, locationsMap) ??
     getLocationFromFreeText(freeText, locationsMap) ??
+    fromProfileCoords(player, labelParts) ??
     getAssociationCentroid(player.association_id, locationsMap, associationPostcodes)
   );
 }

@@ -35,8 +35,8 @@ export function WelcomeScreen() {
         </Link>
       </header>
 
-      <main className="flex min-h-0 flex-1 flex-col justify-between gap-5 overflow-y-auto overscroll-y-none px-5 py-4">
-        <div className="space-y-5">
+      <main className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-y-none px-5 pb-4 pt-2">
+        <section className="space-y-4 text-left">
           <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--accent-brand)]" />
             Local clubs & community football
@@ -51,7 +51,7 @@ export function WelcomeScreen() {
             Discover players nearby, stay in touch, and arrange trials — built for
             grassroots clubs, not big agencies.
           </p>
-        </div>
+        </section>
 
         <ul className="space-y-3">
           {highlights.map(({ icon: Icon, title, desc }) => (

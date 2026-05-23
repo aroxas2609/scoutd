@@ -60,6 +60,7 @@ export function PlayerSearchView() {
             radiusKm,
             latitude: coachSearch.location.lat,
             longitude: coachSearch.location.lng,
+            originPostcode: coachDistrict?.postcode ?? undefined,
             sortByNearest,
           }
         : {}),
@@ -71,6 +72,7 @@ export function PlayerSearchView() {
       coachAssociationId,
       nearbyEnabled,
       coachSearch.location,
+      coachDistrict?.postcode,
       radiusKm,
       sortByNearest,
     ]

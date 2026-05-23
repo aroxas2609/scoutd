@@ -17,6 +17,7 @@ import {
   MAX_HIGHLIGHTS,
 } from "@/lib/player-media";
 import type { PlayerProfile } from "@/types/database";
+import { cn } from "@/lib/utils";
 
 const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 const MAX_VIDEO_MB = 40;
@@ -24,9 +25,10 @@ const MAX_VIDEO_MB = 40;
 type Props = {
   player: PlayerProfile;
   isOwn: boolean;
+  className?: string;
 };
 
-export function PlayerMediaSection({ player, isOwn }: Props) {
+export function PlayerMediaSection({ player, isOwn, className }: Props) {
   const router = useRouter();
   const qc = useQueryClient();
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -158,7 +160,7 @@ export function PlayerMediaSection({ player, isOwn }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={cn("space-y-6", className)}>
       {(highlightUrls.length > 0 || isOwn) && (
         <section className="space-y-3">
           <div className="flex items-center justify-between">

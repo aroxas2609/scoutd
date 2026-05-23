@@ -187,6 +187,8 @@ export interface PlayerSearchFilters {
   latitude?: number;
   longitude?: number;
   sortByNearest?: boolean;
+  /** Club postcode — always included in nearby postcode radius SQL */
+  originPostcode?: string;
   /** Set when coach enables My District filter */
   coachAssociationId?: string;
 }

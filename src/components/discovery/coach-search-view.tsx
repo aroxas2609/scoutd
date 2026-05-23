@@ -52,7 +52,7 @@ export function CoachSearchView() {
         title="Explore"
         subtitle={isBrowsing ? "Browse clubs or search below" : "Clubs and coaches"}
       />
-      <div className="sticky top-[65px] z-30 border-b border-white/[0.06] bg-[var(--bg-deep)]/90 px-4 py-3 backdrop-blur-md">
+      <div className="sticky top-[65px] z-30 border-b border-white/[0.06] bg-[var(--bg-deep)]/90 px-4 py-3 backdrop-blur-md lg:top-[4.5rem] lg:px-6 lg:py-4">
         <div className="flex gap-2">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -72,12 +72,12 @@ export function CoachSearchView() {
       ) : null}
 
       {isBrowsing ? (
-        <div className="px-4 pb-8 pt-2">
+        <div className="px-4 pb-8 pt-2 lg:px-0 lg:pb-10 lg:pt-4">
           <CoachDiscoverSections />
         </div>
       ) : (
         <>
-          <div className="grid gap-3 px-4 pb-8 pt-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-3 px-4 pb-8 pt-4 sm:grid-cols-2 lg:grid-cols-2 lg:px-0 xl:grid-cols-3 2xl:grid-cols-4">
             {showInitialSkeleton ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton key={i} className="aspect-[16/10] rounded-2xl" />

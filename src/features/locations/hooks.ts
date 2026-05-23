@@ -18,6 +18,7 @@ export function usePostcodeLocations() {
       ]);
       return { locationsMap, associationPostcodes };
     },
-    staleTime: 24 * 60 * 60 * 1000,
+    staleTime: 60 * 60 * 1000,
+    refetchOnMount: true,
   });
 }

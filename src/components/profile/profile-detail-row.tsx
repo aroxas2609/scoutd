@@ -18,14 +18,17 @@ export function ProfileDetailRow({
     <div
       className={cn(
         "flex items-start justify-between gap-4 border-b border-white/[0.06] py-3 last:border-0",
+        "lg:flex-col lg:items-start lg:gap-1 lg:py-4",
         className
       )}
     >
-      <span className="flex items-center gap-2 text-sm text-muted-foreground">
+      <span className="flex items-center gap-2 text-sm text-muted-foreground lg:text-xs">
         {Icon ? <Icon className="h-4 w-4 shrink-0 opacity-70" /> : null}
         {label}
       </span>
-      <span className="max-w-[58%] text-right text-sm font-medium text-foreground">{value}</span>
+      <span className="max-w-[58%] text-right text-sm font-medium text-foreground lg:max-w-none lg:text-left lg:text-base">
+        {value}
+      </span>
     </div>
   );
 }

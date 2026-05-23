@@ -67,7 +67,8 @@ export function useNearbyPlayers(radiusKm = DEFAULT_RADIUS_KM) {
         supabase,
         coach.location,
         locations.data!,
-        radiusKm
+        radiusKm,
+        coach.coachDistrict?.postcode
       ),
     enabled: !!coach.location && !!locations.data,
   });

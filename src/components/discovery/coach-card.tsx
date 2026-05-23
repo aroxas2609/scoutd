@@ -26,7 +26,7 @@ export function CoachCard({ coach, compact }: CoachCardProps) {
       <GlassCard
         className={cn(
           "overflow-hidden p-3 transition-colors hover:border-white/[0.14]",
-          compact ? "w-[17rem] shrink-0" : "w-full"
+          compact ? "w-[17rem] shrink-0 lg:w-full lg:shrink" : "w-full"
         )}
       >
         {coach.banner_url ? (

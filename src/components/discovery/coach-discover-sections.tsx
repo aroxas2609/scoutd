@@ -34,13 +34,13 @@ export function CoachDiscoverSections() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 lg:space-y-10">
       {featuredList.length > 0 ? (
         <section>
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Featured
           </h2>
-          <div className="mt-3 flex gap-3 overflow-x-auto hide-scrollbar">
+          <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 hide-scrollbar lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:px-0 xl:grid-cols-4">
             {featuredList.map((c) => (
               <CoachCard key={c.user_id} coach={c} compact />
             ))}
@@ -52,11 +52,11 @@ export function CoachDiscoverSections() {
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Recruiting now
           </h2>
-                <div className="mt-3 flex flex-col gap-2">
-                  {recruitingList.map((c) => (
-                    <CoachCard key={c.user_id} coach={c} />
-                  ))}
-                </div>
+          <div className="mt-3 flex flex-col gap-2 lg:grid lg:grid-cols-2 lg:gap-4 xl:grid-cols-3">
+            {recruitingList.map((c) => (
+              <CoachCard key={c.user_id} coach={c} />
+            ))}
+          </div>
         </section>
       ) : null}
       {allList.length > 0 ? (
@@ -64,11 +64,11 @@ export function CoachDiscoverSections() {
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             All clubs
           </h2>
-                <div className="mt-3 flex flex-col gap-2">
-                  {allList.map((c) => (
-                    <CoachCard key={c.user_id} coach={c} />
-                  ))}
-                </div>
+          <div className="mt-3 flex flex-col gap-2 lg:grid lg:grid-cols-2 lg:gap-4 xl:grid-cols-3">
+            {allList.map((c) => (
+              <CoachCard key={c.user_id} coach={c} />
+            ))}
+          </div>
         </section>
       ) : null}
     </div>
