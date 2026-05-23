@@ -13,6 +13,10 @@ export function ForgotPasswordForm() {
   const [pending, setPending] = useState(false);
   const showLocalhostHint =
     typeof window !== "undefined" && window.location.hostname === "localhost";
+  const showProdResetHint =
+    typeof window !== "undefined" &&
+    !showLocalhostHint &&
+    window.location.hostname.includes("vercel.app");
 
   async function handleSubmit(formData: FormData) {
     setError(null);
@@ -39,6 +43,15 @@ export function ForgotPasswordForm() {
           Reset links open on this computer only while using localhost. On your live site,
           set <span className="font-medium">NEXT_PUBLIC_APP_URL</span> in Vercel to your
           public domain.
+        </p>
+      ) : null}
+      {showProdResetHint ? (
+        <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+          If the email link fails, in Supabase go to Authentication → URL configuration and
+          add your Site URL plus{" "}
+          <span className="font-medium text-foreground">/auth/callback</span> under Redirect
+          URLs, then redeploy Vercel after setting{" "}
+          <span className="font-medium text-foreground">NEXT_PUBLIC_APP_URL</span>.
         </p>
       ) : null}
       <div>

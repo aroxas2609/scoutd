@@ -46,7 +46,14 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-Optional: In Supabase → Authentication → URL configuration, set Site URL to `http://localhost:3000` (used for email confirmation links if enabled).
+**Password reset / auth redirects:** In Supabase → **Authentication** → **URL configuration**:
+
+| Environment | Site URL | Redirect URLs (add each) |
+|-------------|----------|---------------------------|
+| Local | `http://localhost:3000` | `http://localhost:3000/auth/callback` |
+| Production | `https://your-domain.vercel.app` | `https://your-domain.vercel.app/auth/callback` |
+
+You can also add `https://your-domain.vercel.app/auth/callback**` to allow the `?next=` query param. Set the same production URL as `NEXT_PUBLIC_APP_URL` in Vercel (no trailing slash), then **redeploy** after changing env vars.
 
 ### 4. Run locally
 
