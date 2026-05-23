@@ -35,23 +35,25 @@ export function WelcomeScreen() {
         </Link>
       </header>
 
-      <main className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto overscroll-y-none px-5 py-1">
-        <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-muted-foreground">
-          <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--accent-brand)]" />
-          Local clubs & community football
+      <main className="flex min-h-0 flex-1 flex-col justify-between gap-5 overflow-y-auto overscroll-y-none px-5 py-4">
+        <div className="space-y-5">
+          <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-muted-foreground">
+            <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--accent-brand)]" />
+            Local clubs & community football
+          </div>
+
+          <h1 className="text-[2rem] font-semibold leading-[1.15] tracking-tight">
+            Find players for{" "}
+            <span className="text-[var(--accent-brand)]">your club</span>
+          </h1>
+
+          <p className="text-[15px] leading-relaxed text-muted-foreground">
+            Discover players nearby, stay in touch, and arrange trials — built for
+            grassroots clubs, not big agencies.
+          </p>
         </div>
 
-        <h1 className="mt-5 text-[2rem] font-semibold leading-[1.15] tracking-tight">
-          Find players for{" "}
-          <span className="text-[var(--accent-brand)]">your club</span>
-        </h1>
-
-        <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-          Discover players nearby, stay in touch, and arrange trials — built for
-          grassroots clubs, not big agencies.
-        </p>
-
-        <ul className="mt-8 space-y-3">
+        <ul className="space-y-3">
           {highlights.map(({ icon: Icon, title, desc }) => (
             <li
               key={title}

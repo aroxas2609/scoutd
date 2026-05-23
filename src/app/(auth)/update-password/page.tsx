@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AuthPageShell } from "@/components/auth/auth-page-shell";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -24,11 +24,8 @@ export default async function UpdatePasswordPage() {
   const afterSuccess = getPostLoginRedirect(profile) ?? "/search";
 
   return (
-    <>
-      <Link href="/" className="mb-8 block text-center font-display text-2xl font-bold">
-        Scoutd
-      </Link>
-      <GlassCard className="p-8">
+    <AuthPageShell>
+      <GlassCard className="w-full p-8">
         <h1 className="font-display text-2xl font-bold">Set a new password</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Choose a new password for your account.
@@ -37,6 +34,6 @@ export default async function UpdatePasswordPage() {
           <ChangePasswordForm redirectOnSuccess={afterSuccess} />
         </div>
       </GlassCard>
-    </>
+    </AuthPageShell>
   );
 }

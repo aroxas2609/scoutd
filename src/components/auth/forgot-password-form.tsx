@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { requestPasswordReset } from "@/features/auth/actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,11 +48,6 @@ export function ForgotPasswordForm() {
       <PremiumButton type="submit" className="w-full" disabled={pending || !!message}>
         {pending ? "Sending…" : "Send reset link"}
       </PremiumButton>
-      <p className="text-center text-sm text-muted-foreground">
-        <Link href="/login" className="text-[var(--accent-electric)]">
-          Back to sign in
-        </Link>
-      </p>
     </form>
   );
 }

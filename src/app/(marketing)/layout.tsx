@@ -25,7 +25,7 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="h-dvh max-h-dvh overflow-hidden bg-[var(--bg-deep)] supports-[height:100dvh]:h-dvh">
+    <div className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-[var(--bg-deep)]">
       {children}
     </div>
   );
