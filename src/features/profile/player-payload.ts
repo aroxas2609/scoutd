@@ -34,5 +34,7 @@ export function buildPlayerProfileRow(
     willing_to_travel: data.willingToTravel,
     gender: data.gender ?? null,
     association_id: data.associationId?.trim() || null,
+    contact_email: data.contactEmail?.trim() || null,
+    contact_phone: data.contactPhone?.trim() || null,
   };
 }

@@ -8,7 +8,7 @@ export const PLAYER_ONBOARDING_STEP_FIELDS: Record<
   1: ["position", "dominantFoot"],
   2: ["experienceLevel"],
   3: ["bio"],
-  4: ["willingToTravel", "availability"],
+  4: ["willingToTravel", "availability", "contactEmail", "contactPhone"],
 };
 
 export const COACH_ONBOARDING_STEP_FIELDS: Record<

@@ -11,13 +11,22 @@ import type { PlayerProfile, AvailabilityStatus, UserRole } from "@/types/databa
 import {
   ArrowLeft,
   Footprints,
+  Mail,
   MapPin,
+  Phone,
   Ruler,
   User,
   Briefcase,
   Plane,
   Landmark,
 } from "lucide-react";
+import { ProfileDetailLinkRow } from "@/components/profile/profile-detail-link-row";
+import {
+  playerContactEmail,
+  playerContactPhone,
+  playerHasContactDetails,
+  telHref,
+} from "@/features/profile/player-contact";
 import { PlayerProfileCoachActions } from "@/components/profile/player-profile-coach-actions";
 import { ChangePasswordSection } from "@/components/auth/change-password-section";
 import { DeleteAccountSection } from "@/components/auth/delete-account-section";
@@ -97,6 +106,9 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
     player.willing_to_travel != null;
 
   const overviewTwoCol = !isOwn || (player.achievements?.length ?? 0) > 0;
+  const showContactToCoach = !isOwn && isCoachViewer;
+  const contactEmail = showContactToCoach ? playerContactEmail(player) : null;
+  const contactPhone = showContactToCoach ? playerContactPhone(player) : null;
 
   return (
     <div
@@ -118,8 +130,8 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
       </div>
 
       <div className="px-4 pt-6 lg:px-6 lg:pt-8">
-        <div className="flex gap-4 lg:items-start lg:justify-between">
-          <div className="flex min-w-0 flex-1 gap-4 lg:gap-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex min-w-0 w-full flex-1 gap-4 lg:gap-6">
             {isOwn ? (
               <ProfilePhotoUpload
                 userId={player.user_id}
@@ -161,7 +173,7 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
             </div>
           </div>
           {!isOwn && isCoachViewer ? (
-            <div className="mt-4 shrink-0 lg:mt-0 lg:max-w-xs lg:self-start">
+            <div className="w-full shrink-0 lg:max-w-xs lg:self-start">
               <PlayerProfileCoachActions playerId={player.user_id} />
             </div>
           ) : null}
@@ -214,6 +226,36 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
                 isOwn && !overviewTwoCol && "lg:max-w-2xl"
               )}
             >
+              {showContactToCoach ? (
+                <ProfileSection
+                  title="Contact"
+                  className={overviewTwoCol ? "lg:col-span-1" : undefined}
+                >
+                  {contactEmail ? (
+                    <ProfileDetailLinkRow
+                      icon={Mail}
+                      label="Email"
+                      href={`mailto:${contactEmail}`}
+                      value={contactEmail}
+                    />
+                  ) : null}
+                  {contactPhone ? (
+                    <ProfileDetailLinkRow
+                      icon={Phone}
+                      label="Phone"
+                      href={telHref(contactPhone)}
+                      value={contactPhone}
+                    />
+                  ) : null}
+                  {!playerHasContactDetails(player) ? (
+                    <p className="py-3 text-sm text-muted-foreground">
+                      This player has not added contact details yet. Send a message to get in
+                      touch.
+                    </p>
+                  ) : null}
+                </ProfileSection>
+              ) : null}
+
               {hasOverviewDetails ? (
                 <ProfileSection
                   title="Details"

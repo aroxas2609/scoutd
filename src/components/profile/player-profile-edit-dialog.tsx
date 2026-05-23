@@ -292,6 +292,35 @@ export function PlayerProfileEditDialog({ player, embedded }: PlayerProfileEditD
                 </ProfileFormField>
               </ProfileFormSection>
 
+              <ProfileFormSection title="Contact">
+                <ProfileFormField
+                  label="Contact email"
+                  hint="Optional — coaches see your account email if this is blank"
+                  error={form.formState.errors.contactEmail?.message}
+                >
+                  <Input
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    {...form.register("contactEmail")}
+                    className={profileFieldClass}
+                  />
+                </ProfileFormField>
+                <ProfileFormField
+                  label="Phone"
+                  hint="Optional"
+                  error={form.formState.errors.contactPhone?.message}
+                >
+                  <Input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    {...form.register("contactPhone")}
+                    className={profileFieldClass}
+                  />
+                </ProfileFormField>
+              </ProfileFormSection>
+
               <ProfileFormSection title="About & availability">
                 <ProfileFormField label="Gender" hint="Helps coaches find players for the right squads">
                   <SegmentedControl<"any" | "female" | "male">

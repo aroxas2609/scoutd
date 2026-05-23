@@ -104,6 +104,8 @@ export interface PlayerProfile {
   featured_until: string | null;
   has_highlights: boolean;
   association_id: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
   associations?: { name: string } | null;
   profiles?: Profile;
 }

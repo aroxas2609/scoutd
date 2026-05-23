@@ -313,6 +313,28 @@ export default function PlayerOnboardingPage() {
                     value={form.watch("willingToTravel")}
                     onChange={(v) => form.setValue("willingToTravel", v)}
                   />
+                  <OnboardingField
+                    label="Contact email"
+                    hint="Optional — coaches can reach you on your profile"
+                    error={errors.contactEmail?.message}
+                  >
+                    <Input
+                      type="email"
+                      {...form.register("contactEmail")}
+                      className={cn("mt-0 bg-white/5", errors.contactEmail && "border-red-400/50")}
+                    />
+                  </OnboardingField>
+                  <OnboardingField
+                    label="Phone"
+                    hint="Optional"
+                    error={errors.contactPhone?.message}
+                  >
+                    <Input
+                      type="tel"
+                      {...form.register("contactPhone")}
+                      className={cn("mt-0 bg-white/5", errors.contactPhone && "border-red-400/50")}
+                    />
+                  </OnboardingField>
                   {error && <p className="text-sm text-red-400">{error}</p>}
                 </>
               )}

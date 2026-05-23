@@ -21,7 +21,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const mainPadding = cn(
     "flex-1",
-    isChatThread ? "pb-32 lg:pb-0" : "pb-20 lg:pb-6",
+    isChatThread ? "overflow-hidden pb-0 lg:overflow-visible" : "pb-20 lg:pb-6",
     isMessagesRoute && "lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-hidden"
   );
 

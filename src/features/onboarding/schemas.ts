@@ -4,6 +4,14 @@ import { AGE_GROUP_CODES } from "@/lib/football/age-groups";
 import { isMetroAssociation } from "@/lib/football/metro-nsw-associations";
 import { FOOTBALL_POSITION_VALUES } from "@/lib/football/positions";
 
+export const optionalEmail = z
+  .string()
+  .trim()
+  .optional()
+  .refine((v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), {
+    message: "Enter a valid email address",
+  });
+
 export const playerOnboardingSchema = z.object({
   fullName: z.string().trim().min(2, "Enter your full name"),
   dateOfBirth: z
@@ -43,15 +51,9 @@ export const playerOnboardingSchema = z.object({
     .refine((v) => !v || z.string().uuid().safeParse(v).success, {
       message: "Select an association from the list",
     }),
+  contactEmail: optionalEmail,
+  contactPhone: z.string().trim().optional(),
 });
-
-const optionalEmail = z
-  .string()
-  .trim()
-  .optional()
-  .refine((v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), {
-    message: "Enter a valid email address",
-  });
 
 export const coachOnboardingSchema = z.object({
   coachName: z.string().trim().min(2, "Enter your name as coaches see it in messages"),

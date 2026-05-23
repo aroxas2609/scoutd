@@ -46,6 +46,8 @@ export function playerProfileToForm(player: PlayerProfile): PlayerOnboardingInpu
     willingToTravel: player.willing_to_travel ?? false,
     gender: normalizePlayerGender(player.gender) ?? undefined,
     associationId: player.association_id ?? undefined,
+    contactEmail: player.contact_email ?? undefined,
+    contactPhone: player.contact_phone ?? undefined,
   };
 }
 

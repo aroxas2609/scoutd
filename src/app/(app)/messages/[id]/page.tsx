@@ -1,6 +1,7 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useMemo } from "react";
+import { useChatScroll } from "@/components/messaging/use-chat-scroll";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import {
@@ -30,9 +31,33 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [userId, setUserId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
+  const lastMessageKey = useMemo(() => {
+    if (!messages?.length) return "empty";
+    const last = messages[messages.length - 1];
+    return `${messages.length}:${last.id}:${last.created_at}`;
+  }, [messages]);
+
+  const { scrollRef, stickToBottom } = useChatScroll(lastMessageKey);
+
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    function onViewportChange() {
+      stickToBottom();
+    }
+
+    viewport.addEventListener("resize", onViewportChange);
+    viewport.addEventListener("scroll", onViewportChange);
+    return () => {
+      viewport.removeEventListener("resize", onViewportChange);
+      viewport.removeEventListener("scroll", onViewportChange);
+    };
+  }, [stickToBottom]);
 
   const peerTitle = participantDisplayName(peer ?? undefined);
   const peerCoachName = peer ? messageListSubtitle(peer) : null;
@@ -54,13 +79,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     try {
       await sendMessage.mutateAsync(text);
       setText("");
+      stickToBottom();
     } finally {
       setSending(false);
     }
   }
 
   return (
-    <div className="flex min-h-dvh flex-col lg:min-h-0 lg:flex-1">
+    <div className="flex h-dvh max-h-dvh flex-col overflow-hidden lg:h-auto lg:max-h-none lg:min-h-0 lg:flex-1 lg:overflow-visible">
       <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-white/[0.06] bg-[var(--bg-deep)]/90 px-4 py-3 pt-[env(safe-area-inset-top)] backdrop-blur-md lg:pt-3">
         <Link
           href="/messages"
@@ -99,25 +125,30 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         )}
       </header>
 
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-        {!messages?.length && (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            No messages yet. Say hello below.
-          </p>
-        )}
-        {messages?.map((m) =>
-          m.type === "trial_invite" ? (
-            <TrialInviteCard key={m.id} message={m} />
-          ) : (
-            <ChatMessageBubble
-              key={m.id}
-              message={m}
-              conversationId={id}
-              isOwn={m.sender_id === userId}
-              senderLabel={m.sender_id !== userId ? peerSenderLabel : undefined}
-            />
-          )
-        )}
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pt-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
+      >
+        <div className="flex min-h-full flex-col justify-end gap-3">
+          {!messages?.length && (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No messages yet. Say hello below.
+            </p>
+          )}
+          {messages?.map((m) =>
+            m.type === "trial_invite" ? (
+              <TrialInviteCard key={m.id} message={m} />
+            ) : (
+              <ChatMessageBubble
+                key={m.id}
+                message={m}
+                conversationId={id}
+                isOwn={m.sender_id === userId}
+                senderLabel={m.sender_id !== userId ? peerSenderLabel : undefined}
+              />
+            )
+          )}
+        </div>
       </div>
 
       <ChatComposer
