@@ -104,7 +104,7 @@ export function AustraliaLocationField({
         value={query}
         onChange={(e) => handleChange(e.target.value)}
         onFocus={() => setOpen(true)}
-        placeholder="Start typing suburb or postcode…"
+        placeholder="Search suburb or postcode…"
         autoComplete="off"
         role="combobox"
         aria-expanded={open}
@@ -126,7 +126,7 @@ export function AustraliaLocationField({
         >
           {options.length === 0 && !loading ? (
             <li className="px-3 py-2 text-sm text-muted-foreground">
-              No suburbs found — try another spelling
+              No suburbs found — try another suburb or postcode
             </li>
           ) : null}
           {options.map((option) => (

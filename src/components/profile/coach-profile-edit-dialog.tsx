@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { AgeGroupsSelect } from "@/components/forms/age-groups-select";
 import { AustraliaLocationField } from "@/components/forms/australia-location-field";
 import { AssociationSelect } from "@/components/forms/association-select";
+import { DistrictSuggestionBanner } from "@/components/forms/district-suggestion-banner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -149,7 +150,7 @@ export function CoachProfileEditDialog({ coach, embedded }: CoachProfileEditDial
                   />
                 </ProfileFormField>
                 <ProfileFormField
-                  label="Suburb / area"
+                  label="Suburb"
                   error={
                     form.formState.errors.locationSuburb?.message ??
                     form.formState.errors.postcode?.message
@@ -178,6 +179,13 @@ export function CoachProfileEditDialog({ coach, embedded }: CoachProfileEditDial
                     className={profileFieldClass}
                   />
                 </ProfileFormField>
+                <DistrictSuggestionBanner
+                  postcode={form.watch("postcode") ?? ""}
+                  currentDistrictValue={form.watch("league") ?? ""}
+                  onAccept={({ associationName }) =>
+                    form.setValue("league", associationName, { shouldValidate: true })
+                  }
+                />
                 <ProfileFormField
                   label="Age groups"
                   error={form.formState.errors.ageGroups?.message}

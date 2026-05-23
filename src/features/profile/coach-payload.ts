@@ -9,6 +9,7 @@ export function buildCoachLocationFields(data: CoachOnboardingInput) {
   );
   return {
     location,
+    suburb: data.locationSuburb?.trim() || null,
     postcode: data.postcode,
   };
 }

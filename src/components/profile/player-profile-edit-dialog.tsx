@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/sheet";
 import { PremiumButton } from "@/components/ui/premium-button";
 import { Button } from "@/components/ui/button";
+import { AssociationSelect } from "@/components/forms/association-select";
+import { DistrictSuggestionBanner } from "@/components/forms/district-suggestion-banner";
 import { AustraliaLocationField } from "@/components/forms/australia-location-field";
 import { PositionSelect } from "@/components/forms/position-select";
 import { isFootballPosition } from "@/lib/football/positions";
@@ -49,6 +51,7 @@ import {
   DOMINANT_FOOT_OPTIONS,
   EXPERIENCE_LEVEL_OPTIONS,
 } from "@/lib/form-options";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 
 interface PlayerProfileEditDialogProps {
   player: PlayerProfile;
@@ -170,7 +173,7 @@ export function PlayerProfileEditDialog({ player, embedded }: PlayerProfileEditD
                   </ProfileFormField>
                 </div>
                 <ProfileFormField
-                  label="Location"
+                  label="Suburb"
                   error={
                     form.formState.errors.locationSuburb?.message ??
                     form.formState.errors.postcode?.message
@@ -196,6 +199,29 @@ export function PlayerProfileEditDialog({ player, embedded }: PlayerProfileEditD
                       form.setValue("locationState", "");
                       form.setValue("postcode", "");
                     }}
+                    className={profileFieldClass}
+                  />
+                </ProfileFormField>
+                <DistrictSuggestionBanner
+                  postcode={form.watch("postcode") ?? ""}
+                  currentDistrictValue={form.watch("associationId") ?? ""}
+                  onAccept={({ associationId }) =>
+                    form.setValue("associationId", associationId, { shouldValidate: true })
+                  }
+                />
+                <ProfileFormField
+                  label="District / association"
+                  hint="Optional — helps coaches in your area find you"
+                  error={form.formState.errors.associationId?.message}
+                >
+                  <AssociationSelect
+                    value={form.watch("associationId") ?? ""}
+                    onValueChange={(v) =>
+                      form.setValue("associationId", v || undefined, { shouldValidate: true })
+                    }
+                    valueMode="id"
+                    placeholder="Select district"
+                    clearLabel="No district"
                     className={profileFieldClass}
                   />
                 </ProfileFormField>
@@ -267,6 +293,21 @@ export function PlayerProfileEditDialog({ player, embedded }: PlayerProfileEditD
               </ProfileFormSection>
 
               <ProfileFormSection title="About & availability">
+                <ProfileFormField label="Gender" hint="Helps coaches find players for the right squads">
+                  <SegmentedControl<"any" | "female" | "male">
+                    segments={[
+                      { value: "any", label: "Not set" },
+                      { value: "female", label: "Female" },
+                      { value: "male", label: "Male" },
+                    ]}
+                    value={form.watch("gender") ?? "any"}
+                    onChange={(v) =>
+                      form.setValue("gender", v === "any" ? undefined : v, {
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                </ProfileFormField>
                 <ProfileFormField label="Bio">
                   <Textarea
                     {...form.register("bio")}

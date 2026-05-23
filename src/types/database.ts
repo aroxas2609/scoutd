@@ -13,6 +13,8 @@ export type ExperienceLevel =
 
 export type DominantFoot = "left" | "right" | "both";
 
+export type PlayerGender = "female" | "male";
+
 export type MessageType = "text" | "trial_invite" | "system";
 
 export type TrialStatus = "pending" | "accepted" | "declined" | "maybe";
@@ -27,6 +29,40 @@ export type NotificationType =
 export type VerificationStatus = "pending" | "approved" | "rejected";
 
 export type ReportStatus = "open" | "resolved" | "dismissed";
+
+export interface Association {
+  id: string;
+  name: string;
+  type: string;
+  contact_name: string | null;
+  phone: string | null;
+  email: string | null;
+  website_url: string | null;
+  logo_url: string | null;
+  created_at: string;
+}
+
+export interface AssociationPostcode {
+  id: string;
+  association_id: string;
+  postcode: string;
+  suburb: string | null;
+  state: string;
+  created_at: string;
+}
+
+export interface PostcodeLocation {
+  id: string;
+  postcode: string;
+  suburb: string | null;
+  state: string;
+  latitude: number | null;
+  longitude: number | null;
+  created_at: string;
+}
+
+/** Player with computed distance (not persisted). */
+export type PlayerWithDistance = PlayerProfile & { distanceKm?: number };
 
 export interface Profile {
   id: string;
@@ -44,6 +80,7 @@ export interface PlayerProfile {
   cover_url: string | null;
   age: number | null;
   date_of_birth: string | null;
+  suburb: string | null;
   postcode: string | null;
   location: string | null;
   location_public: string | null;
@@ -61,11 +98,13 @@ export interface PlayerProfile {
   social_links: Record<string, string | string[]>;
   playing_level: string | null;
   willing_to_travel: boolean;
-  gender: string | null;
+  gender: PlayerGender | null;
   completion_score: number;
   verified_at: string | null;
   featured_until: string | null;
   has_highlights: boolean;
+  association_id: string | null;
+  associations?: { name: string } | null;
   profiles?: Profile;
 }
 
@@ -77,6 +116,7 @@ export interface CoachProfile {
   league: string | null;
   age_groups: string[];
   location: string | null;
+  suburb: string | null;
   postcode: string | null;
   address: string | null;
   contact_email: string | null;
@@ -87,6 +127,7 @@ export interface CoachProfile {
   recruiting_needs: string | null;
   about: string | null;
   verified_at: string | null;
+  association_id: string | null;
   profiles?: Profile;
 }
 
@@ -141,10 +182,16 @@ export interface PlayerSearchFilters {
   availability?: AvailabilityStatus;
   experienceLevel?: ExperienceLevel;
   willingToTravel?: boolean;
-  gender?: string;
+  gender?: PlayerGender;
   radiusKm?: number;
   latitude?: number;
   longitude?: number;
+  sortByNearest?: boolean;
+  /** Set when coach enables My District filter */
+  coachAssociationId?: string;
+  samePostcodeAsCoach?: boolean;
+  /** Internal: coach club postcode when samePostcodeAsCoach is on */
+  coachPostcode?: string;
 }
 
 export interface CoachSearchFilters {

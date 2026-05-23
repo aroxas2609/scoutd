@@ -13,6 +13,8 @@ import { PLAYER_ONBOARDING_STEP_FIELDS } from "@/features/onboarding/step-fields
 import { goBackToRoleSelection } from "@/features/auth/role-actions";
 import { completePlayerOnboarding } from "@/features/onboarding/actions";
 import { OnboardingField } from "@/components/onboarding/onboarding-field";
+import { AssociationSelect } from "@/components/forms/association-select";
+import { DistrictSuggestionBanner } from "@/components/forms/district-suggestion-banner";
 import { AustraliaLocationField } from "@/components/forms/australia-location-field";
 import { PositionSelect } from "@/components/forms/position-select";
 import { SheetSelect } from "@/components/forms/sheet-select";
@@ -29,6 +31,7 @@ import { PremiumButton } from "@/components/ui/premium-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { ProfileFormYesNo } from "@/components/profile/profile-form-primitives";
 import { cn } from "@/lib/utils";
 
@@ -138,7 +141,25 @@ export default function PlayerOnboardingPage() {
                     />
                   </OnboardingField>
                   <OnboardingField
-                    label="Location"
+                    label="Gender"
+                    hint="Optional — helps coaches filter squads"
+                  >
+                    <SegmentedControl<"any" | "female" | "male">
+                      segments={[
+                        { value: "any", label: "Prefer not to say" },
+                        { value: "female", label: "Female" },
+                        { value: "male", label: "Male" },
+                      ]}
+                      value={form.watch("gender") ?? "any"}
+                      onChange={(v) =>
+                        form.setValue("gender", v === "any" ? undefined : v, {
+                          shouldValidate: true,
+                        })
+                      }
+                    />
+                  </OnboardingField>
+                  <OnboardingField
+                    label="Suburb"
                     error={
                       errors.locationSuburb?.message ??
                       errors.postcode?.message ??
@@ -172,6 +193,28 @@ export default function PlayerOnboardingPage() {
                           errors.locationState
                         )
                       }
+                    />
+                  </OnboardingField>
+                  <DistrictSuggestionBanner
+                    postcode={form.watch("postcode") ?? ""}
+                    currentDistrictValue={form.watch("associationId") ?? ""}
+                    onAccept={({ associationId }) =>
+                      form.setValue("associationId", associationId, { shouldValidate: true })
+                    }
+                  />
+                  <OnboardingField
+                    label="District / association"
+                    hint="Optional — helps coaches in your area find you"
+                    error={errors.associationId?.message}
+                  >
+                    <AssociationSelect
+                      value={form.watch("associationId") ?? ""}
+                      onValueChange={(v) =>
+                        form.setValue("associationId", v || undefined, { shouldValidate: true })
+                      }
+                      valueMode="id"
+                      placeholder="Select district"
+                      clearLabel="No district"
                     />
                   </OnboardingField>
                 </>

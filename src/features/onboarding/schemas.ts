@@ -36,7 +36,13 @@ export const playerOnboardingSchema = z.object({
   availability: z.enum(["available", "open_to_offers", "not_available"]),
   playingLevel: z.string().optional(),
   willingToTravel: z.boolean(),
-  gender: z.string().optional(),
+  gender: z.enum(["female", "male"]).optional(),
+  associationId: z
+    .string()
+    .optional()
+    .refine((v) => !v || z.string().uuid().safeParse(v).success, {
+      message: "Select an association from the list",
+    }),
 });
 
 const optionalEmail = z

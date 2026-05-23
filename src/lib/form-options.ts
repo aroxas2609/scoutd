@@ -16,3 +16,10 @@ export const AVAILABILITY_OPTIONS = [
   { value: "open_to_offers", label: "Open to offers" },
   { value: "not_available", label: "Not available" },
 ] as const;
+
+export const PLAYER_GENDER_OPTIONS = [
+  { value: "female", label: "Female" },
+  { value: "male", label: "Male" },
+] as const;
+
+export type PlayerGender = (typeof PLAYER_GENDER_OPTIONS)[number]["value"];

@@ -18,6 +18,7 @@ export function buildPlayerProfileRow(
     user_id: userId,
     age,
     date_of_birth: data.dateOfBirth,
+    suburb: data.locationSuburb?.trim() || null,
     postcode: data.postcode,
     location: locationLabel,
     location_public: locationLabel,
@@ -32,5 +33,6 @@ export function buildPlayerProfileRow(
     playing_level: data.playingLevel ?? null,
     willing_to_travel: data.willingToTravel,
     gender: data.gender ?? null,
+    association_id: data.associationId?.trim() || null,
   };
 }

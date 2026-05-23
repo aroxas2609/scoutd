@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { computeCompletionScore } from "@/features/players/repository";
+import { resolveAssociationIdByName } from "@/features/associations/repository";
 import { buildCoachLocationFields } from "@/features/profile/coach-payload";
 import { buildPlayerProfileRow } from "@/features/profile/player-payload";
 import type { CoachOnboardingInput, PlayerOnboardingInput } from "./schemas";
@@ -66,13 +67,17 @@ export async function completeCoachOnboarding(data: CoachOnboardingInput) {
     return { error: "Complete club setup from the coach onboarding path." };
   }
 
-  const { location, postcode } = buildCoachLocationFields(data);
+  const { location, suburb, postcode } = buildCoachLocationFields(data);
+  const league = data.league?.trim() || null;
+  const { id: association_id } = await resolveAssociationIdByName(supabase, league);
 
   const { error: coachError } = await supabase.from("coach_profiles").upsert({
     user_id: user.id,
     club_name: data.clubName.trim(),
-    league: data.league?.trim() || null,
+    league,
+    association_id,
     location,
+    suburb,
     postcode,
     address: data.address?.trim() || null,
     contact_email: data.contactEmail?.trim() || null,

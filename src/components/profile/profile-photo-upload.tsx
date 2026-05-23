@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Camera, Loader2, User } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -28,8 +29,13 @@ export function ProfilePhotoUpload({
 }: ProfilePhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null);
   const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    setPreview(currentUrl ?? null);
+  }, [currentUrl]);
 
   async function handleFile(file: File) {
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -83,6 +89,8 @@ export function ProfilePhotoUpload({
     }
 
     setPreview(publicUrl);
+    await queryClient.invalidateQueries({ queryKey: ["players"] });
+    await queryClient.invalidateQueries({ queryKey: ["player", userId] });
     toast.success("Profile photo updated");
     setUploading(false);
     router.refresh();
@@ -102,7 +110,7 @@ export function ProfilePhotoUpload({
         )}
       >
         {preview ? (
-          <Image src={preview} alt="Profile" fill className="object-cover" />
+          <Image src={preview} alt="Profile" fill unoptimized className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <User className="h-10 w-10 text-white/25" />

@@ -14,6 +14,7 @@ import { completeCoachOnboarding } from "@/features/onboarding/actions";
 import { AgeGroupsSelect } from "@/components/forms/age-groups-select";
 import { AustraliaLocationField } from "@/components/forms/australia-location-field";
 import { AssociationSelect } from "@/components/forms/association-select";
+import { DistrictSuggestionBanner } from "@/components/forms/district-suggestion-banner";
 import { OnboardingField } from "@/components/onboarding/onboarding-field";
 import { GlassCard } from "@/components/ui/glass-card";
 import { PremiumButton } from "@/components/ui/premium-button";
@@ -94,20 +95,7 @@ export default function CoachOnboardingPage() {
                 />
               </OnboardingField>
               <OnboardingField
-                label="Association"
-                hint="Optional — Metro NSW"
-                error={errors.league?.message}
-              >
-                <AssociationSelect
-                  value={form.watch("league") ?? ""}
-                  onValueChange={(v) =>
-                    form.setValue("league", v || undefined, { shouldValidate: true })
-                  }
-                  error={!!errors.league}
-                />
-              </OnboardingField>
-              <OnboardingField
-                label="Suburb / area"
+                label="Suburb"
                 error={
                   errors.locationSuburb?.message ??
                   errors.postcode?.message ??
@@ -141,6 +129,26 @@ export default function CoachOnboardingPage() {
                       errors.locationState
                     )
                   }
+                />
+              </OnboardingField>
+              <DistrictSuggestionBanner
+                postcode={form.watch("postcode") ?? ""}
+                currentDistrictValue={form.watch("league") ?? ""}
+                onAccept={({ associationName }) =>
+                  form.setValue("league", associationName, { shouldValidate: true })
+                }
+              />
+              <OnboardingField
+                label="Association"
+                hint="Optional — Metro NSW"
+                error={errors.league?.message}
+              >
+                <AssociationSelect
+                  value={form.watch("league") ?? ""}
+                  onValueChange={(v) =>
+                    form.setValue("league", v || undefined, { shouldValidate: true })
+                  }
+                  error={!!errors.league}
                 />
               </OnboardingField>
               <OnboardingField label="Street address" hint="Optional" error={errors.address?.message}>

@@ -3,13 +3,24 @@ import { approximateDateOfBirthFromAge } from "@/lib/age";
 import { isFootballPosition, type FootballPosition } from "@/lib/football/positions";
 import { isAgeGroupCode, sortAgeGroupCodes } from "@/lib/football/age-groups";
 import { parseStoredAustraliaLocation } from "@/lib/location/australia";
-import type { CoachProfile, PlayerProfile } from "@/types/database";
+import type { CoachProfile, PlayerGender, PlayerProfile } from "@/types/database";
+
+function normalizePlayerGender(value: string | null | undefined): PlayerGender | undefined {
+  if (!value?.trim()) return undefined;
+  const v = value.trim().toLowerCase();
+  if (v === "female" || v === "f") return "female";
+  if (v === "male" || v === "m") return "male";
+  return undefined;
+}
 
 export function playerProfileToForm(player: PlayerProfile): PlayerOnboardingInput {
-  const { suburb, state, postcode } = parseStoredAustraliaLocation(
+  const parsed = parseStoredAustraliaLocation(
     player.location_public ?? player.location,
     player.postcode
   );
+  const suburb = player.suburb?.trim() || parsed.suburb;
+  const state = parsed.state;
+  const postcode = player.postcode?.trim() || parsed.postcode;
 
   const dateOfBirth =
     player.date_of_birth ??
@@ -33,7 +44,8 @@ export function playerProfileToForm(player: PlayerProfile): PlayerOnboardingInpu
     availability: player.availability ?? "available",
     playingLevel: player.playing_level ?? undefined,
     willingToTravel: player.willing_to_travel ?? false,
-    gender: player.gender ?? undefined,
+    gender: normalizePlayerGender(player.gender) ?? undefined,
+    associationId: player.association_id ?? undefined,
   };
 }
 
@@ -42,10 +54,10 @@ export function coachProfileToForm(coach: CoachProfile): CoachOnboardingInput {
   const storedName = coach.profiles?.full_name?.trim() ?? "";
   const coachName = storedName && storedName !== clubName ? storedName : "";
 
-  const { suburb, state, postcode } = parseStoredAustraliaLocation(
-    coach.location,
-    coach.postcode
-  );
+  const parsed = parseStoredAustraliaLocation(coach.location, coach.postcode);
+  const suburb = coach.suburb?.trim() || parsed.suburb;
+  const state = parsed.state;
+  const postcode = coach.postcode?.trim() || parsed.postcode;
 
   return {
     coachName,

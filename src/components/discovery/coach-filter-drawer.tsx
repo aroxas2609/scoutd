@@ -87,7 +87,7 @@ export function CoachFilterDrawer({ filters, onChange }: CoachFilterDrawerProps)
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-y-contain px-4 py-4">
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Suburb / area</Label>
+            <Label className="text-sm font-medium">Suburb</Label>
             <AustraliaLocationField
               suburb={locationParts.suburb}
               state={locationParts.state}

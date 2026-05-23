@@ -11,7 +11,12 @@ import { EmptyStateCinematic } from "@/components/ui/empty-state";
 import { PageLoader } from "@/components/ui/page-loader";
 import { Users } from "lucide-react";
 
-export function PlayerDiscoverSections() {
+type PlayerDiscoverSectionsProps = {
+  /** Hide duplicate nearby row when coach widget already shows nearby preview */
+  hideNearbySection?: boolean;
+};
+
+export function PlayerDiscoverSections({ hideNearbySection = false }: PlayerDiscoverSectionsProps) {
   const featured = useFeaturedPlayers();
   const trending = useTrendingPlayers();
   const nearby = useNearbyPlayers();
@@ -21,10 +26,11 @@ export function PlayerDiscoverSections() {
   const trendingList = trending.data?.data ?? [];
   const nearbyList = nearby.data?.data ?? [];
   const activeList = active.data?.data ?? [];
+  const showNearby = !hideNearbySection && nearbyList.length > 0;
   const hasAny =
     featuredList.length > 0 ||
     trendingList.length > 0 ||
-    nearbyList.length > 0 ||
+    showNearby ||
     activeList.length > 0;
   const loading =
     featured.isPending || trending.isPending || nearby.isPending || active.isPending;
@@ -48,7 +54,7 @@ export function PlayerDiscoverSections() {
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Featured
           </h2>
-          <div className="mt-3 flex gap-3 overflow-x-auto hide-scrollbar">
+          <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 hide-scrollbar">
             {featuredList.map((p) => (
               <PlayerCard key={p.user_id} player={p} compact />
             ))}
@@ -67,14 +73,14 @@ export function PlayerDiscoverSections() {
           </div>
         </section>
       ) : null}
-      {nearbyList.length > 0 ? (
+      {showNearby ? (
         <section>
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Nearby
           </h2>
-          <div className="mt-3 flex gap-3 overflow-x-auto hide-scrollbar">
+          <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 hide-scrollbar">
             {nearbyList.map((p) => (
-              <PlayerCard key={p.user_id} player={p} compact />
+              <PlayerCard key={p.user_id} player={p} distanceKm={p.distanceKm} compact />
             ))}
           </div>
         </section>

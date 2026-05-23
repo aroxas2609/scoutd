@@ -16,6 +16,7 @@ import {
   User,
   Briefcase,
   Plane,
+  Landmark,
 } from "lucide-react";
 import { PlayerProfileCoachActions } from "@/components/profile/player-profile-coach-actions";
 import { ChangePasswordSection } from "@/components/auth/change-password-section";
@@ -53,8 +54,11 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
     player.current_club,
   ].filter(Boolean);
 
+  const districtName = player.associations?.name ?? null;
+
   const hasOverviewDetails =
     player.location_public ||
+    districtName ||
     player.height_cm ||
     player.dominant_foot ||
     player.experience_level ||
@@ -159,8 +163,13 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
               <ProfileSection title="Details">
                 <ProfileDetailRow
                   icon={MapPin}
-                  label="Location"
+                  label="Suburb"
                   value={player.location_public}
+                />
+                <ProfileDetailRow
+                  icon={Landmark}
+                  label="District"
+                  value={districtName}
                 />
                 <ProfileDetailRow icon={Ruler} label="Height" value={player.height_cm ? `${player.height_cm} cm` : null} />
                 <ProfileDetailRow

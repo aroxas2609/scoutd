@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { resolveAssociationIdByName } from "@/features/associations/repository";
 import { computeCompletionScore } from "@/features/players/repository";
 import { buildCoachLocationFields } from "@/features/profile/coach-payload";
 import { buildPlayerProfileRow } from "@/features/profile/player-payload";
@@ -53,13 +54,17 @@ export async function updateCoachProfile(data: CoachOnboardingInput) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  const { location, postcode } = buildCoachLocationFields(data);
+  const { location, suburb, postcode } = buildCoachLocationFields(data);
+  const league = data.league?.trim() || null;
+  const { id: association_id } = await resolveAssociationIdByName(supabase, league);
 
   const { error } = await supabase.from("coach_profiles").upsert({
     user_id: user.id,
     club_name: data.clubName,
-    league: data.league ?? null,
+    league,
+    association_id,
     location,
+    suburb,
     postcode,
     address: data.address?.trim() || null,
     contact_email: data.contactEmail?.trim() || null,

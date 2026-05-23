@@ -1,7 +1,10 @@
 "use client";
 
-import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { usePostcodeLocations } from "@/features/locations/hooks";
+import { useCoachSearchLocation } from "@/features/coaches/hooks";
+import { DEFAULT_RADIUS_KM } from "@/lib/geo/location-radius";
 import {
   searchPlayers,
   getFeaturedPlayers,
@@ -14,11 +17,23 @@ import type { PlayerSearchFilters } from "@/types/database";
 
 export function usePlayerSearch(filters: PlayerSearchFilters) {
   const supabase = createClient();
+  const locations = usePostcodeLocations();
+  const nearbyActive =
+    filters.radiusKm != null && filters.latitude != null && filters.longitude != null;
+
   return useInfiniteQuery({
     queryKey: ["players", "search", filters],
-    queryFn: ({ pageParam = 0 }) => searchPlayers(supabase, filters, pageParam),
+    queryFn: ({ pageParam = 0 }) =>
+      searchPlayers(
+        supabase,
+        filters,
+        pageParam,
+        nearbyActive && locations.data ? locations.data : undefined
+      ),
     initialPageParam: 0,
-    placeholderData: keepPreviousData,
+    staleTime: 0,
+    refetchOnMount: true,
+    enabled: !nearbyActive || !!locations.data,
     getNextPageParam: (lastPage, _, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
   });
@@ -40,11 +55,21 @@ export function useTrendingPlayers() {
   });
 }
 
-export function useNearbyPlayers() {
+export function useNearbyPlayers(radiusKm = DEFAULT_RADIUS_KM) {
   const supabase = createClient();
+  const locations = usePostcodeLocations();
+  const coach = useCoachSearchLocation();
+
   return useQuery({
-    queryKey: ["players", "nearby"],
-    queryFn: () => getNearbyPlayers(supabase),
+    queryKey: ["players", "nearby", radiusKm, coach.location?.lat, coach.location?.lng],
+    queryFn: () =>
+      getNearbyPlayers(
+        supabase,
+        coach.location,
+        locations.data!,
+        radiusKm
+      ),
+    enabled: !!coach.location && !!locations.data,
   });
 }
 
