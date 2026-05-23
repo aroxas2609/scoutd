@@ -35,7 +35,7 @@ export function PlayerCard({ player, distanceKm, onSave, saved, compact }: Playe
       <GlassCard
         className={cn(
           "overflow-hidden transition-colors hover:border-white/[0.14]",
-          compact ? "w-[11.5rem] shrink-0" : "w-full"
+          compact ? "w-[11.5rem] shrink-0 lg:w-full lg:shrink" : "w-full"
         )}
       >
         <div className="relative aspect-[4/5] bg-[var(--bg-elevated)]">

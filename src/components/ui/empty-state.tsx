@@ -17,7 +17,7 @@ export function EmptyStateCinematic({
         {icon}
       </div>
       <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
-      <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
+      <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground lg:max-w-md">
         {description}
       </p>
       {action ? <div className="mt-6">{action}</div> : null}

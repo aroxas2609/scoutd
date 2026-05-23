@@ -12,6 +12,7 @@ type NearbyRadiusControlsProps = {
   sortByNearest: boolean;
   onSortByNearestChange: (value: boolean) => void;
   searchLabel?: string | null;
+  className?: string;
 };
 
 export function NearbyRadiusControls({
@@ -20,9 +21,15 @@ export function NearbyRadiusControls({
   sortByNearest,
   onSortByNearestChange,
   searchLabel,
+  className,
 }: NearbyRadiusControlsProps) {
   return (
-    <div className="space-y-2.5 border-t border-white/[0.06] px-4 py-2.5">
+    <div
+      className={cn(
+        "space-y-2.5 border-t border-white/[0.06] px-4 py-2.5",
+        className
+      )}
+    >
       <div className="flex items-center justify-between gap-3">
         {searchLabel ? (
           <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">

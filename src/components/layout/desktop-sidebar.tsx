@@ -5,24 +5,26 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUnreadMessageCount } from "@/features/messaging/hooks";
 import { useIsCoachViewer } from "@/features/auth/use-viewer-role";
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 import { appNavTabs, getTabLabel } from "@/components/layout/app-nav-tabs";
 
-export function BottomTabBar({ className }: { className?: string }) {
+export function DesktopSidebar() {
   const pathname = usePathname();
   const { isPlayer, isCoach } = useIsCoachViewer();
   const { data: unreadMessages = 0 } = useUnreadMessageCount();
 
   const visibleTabs = appNavTabs.filter((tab) => !tab.coachOnly || isCoach);
-  const compact = visibleTabs.length > 5;
 
   return (
-    <nav
-      className={cn(
-        "fixed bottom-0 left-0 right-0 z-[100] border-t border-white/[0.06] bg-[var(--bg-deep)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden",
-        className
-      )}
-    >
-      <div className="mx-auto flex max-w-lg items-stretch justify-around px-0.5">
+    <aside className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:border-r lg:border-white/[0.06] lg:bg-[var(--bg-deep)]">
+      <div className="flex items-center justify-between gap-2 px-5 py-5">
+        <Link href="/search" className="font-display text-xl font-bold tracking-tight">
+          Scoutd
+        </Link>
+        <NotificationDropdown />
+      </div>
+
+      <nav className="flex flex-1 flex-col gap-0.5 px-3 py-2" aria-label="Main">
         {visibleTabs.map((tab) => {
           const tabLabel = getTabLabel(tab, { isPlayer, isCoach });
           const active = pathname.startsWith(tab.href);
@@ -35,17 +37,13 @@ export function BottomTabBar({ className }: { className?: string }) {
               href={tab.href}
               prefetch
               className={cn(
-                "relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-2.5 font-medium transition-colors",
-                compact ? "text-[10px]" : "text-[11px]",
-                active ? "text-foreground" : "text-muted-foreground"
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                active
+                  ? "bg-white/[0.08] text-foreground"
+                  : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
               )}
             >
-              <span
-                className={cn(
-                  "relative flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
-                  active && "bg-white/[0.08]"
-                )}
-              >
+              <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
                 <Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.25 : 2} />
                 {showBadge ? (
                   <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--accent-brand)] px-1 text-[9px] font-semibold text-[var(--primary-foreground)]">
@@ -53,11 +51,11 @@ export function BottomTabBar({ className }: { className?: string }) {
                   </span>
                 ) : null}
               </span>
-              <span className="truncate px-0.5">{tabLabel}</span>
+              {tabLabel}
             </Link>
           );
         })}
-      </div>
-    </nav>
+      </nav>
+    </aside>
   );
 }

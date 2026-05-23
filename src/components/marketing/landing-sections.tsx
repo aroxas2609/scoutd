@@ -58,7 +58,7 @@ export function FeaturesGrid() {
     <section className="py-24">
       <div className="mx-auto max-w-6xl px-6">
         <h2 className="font-display text-3xl font-bold">Built for the modern game</h2>
-        <div className="mt-12 grid gap-4 sm:grid-cols-2">
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => (
             <GlassCard key={f.title} glow className="p-6">
               <f.icon className="h-8 w-8 text-[var(--accent-electric)]" />

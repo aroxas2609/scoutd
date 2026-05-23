@@ -15,6 +15,7 @@ import {
   countActivePlayerFilters,
   type DrawerFilterState,
 } from "@/components/discovery/filter-drawer";
+import { PlayerFiltersSidebar } from "@/components/discovery/player-filters-sidebar";
 import { useCoachDistrict, useCoachSearchLocation } from "@/features/coaches/hooks";
 import { useIsCoachViewer } from "@/features/auth/use-viewer-role";
 import { useFeaturedPlayers, usePlayerSearch, useTrendingPlayers } from "@/features/players/hooks";
@@ -43,7 +44,6 @@ export function PlayerSearchView() {
   const coachSearch = useCoachSearchLocation();
   const { isCoach } = useIsCoachViewer();
   const coachAssociationId = coachDistrict?.association_id ?? null;
-  const coachPostcode = coachDistrict?.postcode ?? null;
 
   const nearbyEnabled = nearbyParam === "1";
   const radiusKm: RadiusKm =
@@ -55,8 +55,6 @@ export function PlayerSearchView() {
       query: debouncedQuery || undefined,
       coachAssociationId:
         myDistrict && coachAssociationId ? coachAssociationId : undefined,
-      coachPostcode:
-        filterState.samePostcodeAsCoach && coachPostcode ? coachPostcode : undefined,
       ...(nearbyEnabled && coachSearch.location
         ? {
             radiusKm,
@@ -71,7 +69,6 @@ export function PlayerSearchView() {
       debouncedQuery,
       myDistrict,
       coachAssociationId,
-      coachPostcode,
       nearbyEnabled,
       coachSearch.location,
       radiusKm,
@@ -162,7 +159,59 @@ export function PlayerSearchView() {
                   : "Find players"
         }
       />
-      <div className="sticky top-[65px] z-30 border-b border-white/[0.06] bg-[var(--bg-deep)]/95 backdrop-blur-md">
+      {isCoach ? (
+        <div className="hidden border-b border-white/[0.06] bg-[var(--bg-deep)]/95 lg:block lg:px-6 lg:pb-4 lg:pt-2">
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value || null)}
+                placeholder="Search name, club, suburb…"
+                className="h-11 pl-10"
+              />
+            </div>
+            <DiscoverFilterChips
+              myDistrict={myDistrict}
+              onMyDistrictChange={setMyDistrict}
+              nearbyEnabled={nearbyEnabled}
+              onNearbyToggle={toggleNearby}
+            />
+          </div>
+          {nearbyEnabled ? (
+            <NearbyRadiusControls
+              className="mt-3 border-t-0 px-0 py-0"
+              radiusKm={radiusKm}
+              onRadiusChange={(km) => setRadiusParam(km)}
+              sortByNearest={sortByNearest}
+              onSortByNearestChange={setSortByNearest}
+              searchLabel={
+                coachSearch.label === "Your district" && coachDistrict?.league
+                  ? coachDistrict.league
+                  : coachSearch.label
+              }
+            />
+          ) : null}
+        </div>
+      ) : null}
+      <div
+        className={
+          isCoach
+            ? "lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] xl:grid-cols-[17.5rem_minmax(0,1fr)] lg:items-start lg:gap-6 lg:px-6 lg:pt-4"
+            : undefined
+        }
+      >
+        {isCoach ? (
+          <PlayerFiltersSidebar filters={filterState} onChange={setFilterState} />
+        ) : null}
+        <div className="min-w-0">
+      <div
+        className={
+          isCoach
+            ? "sticky top-[65px] z-30 border-b border-white/[0.06] bg-[var(--bg-deep)]/95 backdrop-blur-md lg:hidden"
+            : "sticky top-[65px] z-30 border-b border-white/[0.06] bg-[var(--bg-deep)]/95 backdrop-blur-md lg:top-[4.5rem]"
+        }
+      >
         <div className="space-y-2.5 px-4 pt-3 pb-2">
           <div className="flex gap-2">
             <div className="relative min-w-0 flex-1">
@@ -174,11 +223,7 @@ export function PlayerSearchView() {
                 className="h-10 pl-10"
               />
             </div>
-            <FilterDrawer
-              filters={filterState}
-              onChange={setFilterState}
-              coachPostcode={coachPostcode}
-            />
+            <FilterDrawer filters={filterState} onChange={setFilterState} />
           </div>
           {isCoach ? (
             <DiscoverFilterChips
@@ -208,7 +253,7 @@ export function PlayerSearchView() {
         <button
           type="button"
           onClick={() => setSwipeMode(!swipeMode)}
-          className="fixed bottom-28 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-zinc-900 shadow-lg"
+          className="fixed bottom-28 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-zinc-900 shadow-lg lg:bottom-8 lg:right-8"
           aria-label={swipeMode ? "Show browse lists" : "Swipe to scout"}
         >
           <Layers className="h-6 w-6" />
@@ -251,9 +296,16 @@ export function PlayerSearchView() {
             <SwipeDeck players={swipePlayers} />
           </div>
         ) : (
-          <div className="px-4 pb-8 pt-4">
+          <div className="px-4 pb-8 pt-4 lg:px-0">
             {isCoach ? (
-              <PlayersNearClubWidget onSearchNearby={enableNearby} />
+              <div className="lg:hidden">
+                <PlayersNearClubWidget onSearchNearby={enableNearby} />
+              </div>
+            ) : null}
+            {isCoach ? (
+              <div className="mb-8 hidden lg:block">
+                <PlayersNearClubWidget layout="grid" onSearchNearby={enableNearby} />
+              </div>
             ) : null}
             <PlayerDiscoverSections hideNearbySection={isCoach} />
           </div>
@@ -262,7 +314,7 @@ export function PlayerSearchView() {
         <>
           <div className="px-4 pb-8 pt-4">
             {showInitialSkeleton ? (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} className="aspect-[4/5] rounded-2xl" />
                 ))}
@@ -286,7 +338,7 @@ export function PlayerSearchView() {
                 description="Try a different search or adjust filters."
               />
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {players.map((p) => (
                   <PlayerCard
                     key={p.user_id}
@@ -300,6 +352,8 @@ export function PlayerSearchView() {
           <div ref={loadMoreRef} className="h-4" />
         </>
       )}
+        </div>
+      </div>
     </div>
   );
 }

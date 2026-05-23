@@ -62,6 +62,8 @@ INSERT INTO postcode_locations (postcode, suburb, state, latitude, longitude) VA
   ('2170', 'Liverpool', 'NSW', -33.928, 150.925),
   ('2171', 'Carnes Hill', 'NSW', -33.935, 150.923),
   ('2176', 'Greenfield Park', 'NSW', -33.897, 150.968),
+  ('2178', 'Cecil Park', 'NSW', -33.8985, 150.8055),
+  ('2179', 'Austral', 'NSW', -33.9339, 150.8174),
   ('2190', 'Greenacre', 'NSW', -33.937, 151.031),
   ('2191', 'Belfield', 'NSW', -33.927, 151.041),
   ('2192', 'Belmore', 'NSW', -33.917, 151.051),

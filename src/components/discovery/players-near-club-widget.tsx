@@ -6,9 +6,11 @@ import { useCoachSearchLocation } from "@/features/coaches/hooks";
 import { useNearbyPlayers } from "@/features/players/hooks";
 import { DEFAULT_RADIUS_KM } from "@/lib/geo/location-radius";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 type PlayersNearClubWidgetProps = {
   onSearchNearby?: () => void;
+  layout?: "carousel" | "grid";
 };
 
 function formatOriginLabel(
@@ -20,17 +22,32 @@ function formatOriginLabel(
   return label;
 }
 
-export function PlayersNearClubWidget({ onSearchNearby }: PlayersNearClubWidgetProps) {
+export function PlayersNearClubWidget({
+  onSearchNearby,
+  layout = "carousel",
+}: PlayersNearClubWidgetProps) {
   const coach = useCoachSearchLocation();
   const nearby = useNearbyPlayers(DEFAULT_RADIUS_KM);
+  const isGrid = layout === "grid";
 
   if (coach.isLoading || nearby.isLoading) {
     return (
-      <section className="mb-8">
+      <section className={cn("mb-8", isGrid && "lg:mb-0")}>
         <Skeleton className="h-4 w-32" />
-        <div className="mt-3 flex gap-3 overflow-x-auto hide-scrollbar">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Skeleton key={i} className="h-52 w-44 shrink-0 rounded-2xl" />
+        <div
+          className={cn(
+            "mt-3 flex gap-3 overflow-x-auto hide-scrollbar",
+            isGrid && "lg:grid lg:grid-cols-2 lg:gap-4 lg:overflow-visible xl:grid-cols-3"
+          )}
+        >
+          {Array.from({ length: isGrid ? 3 : 2 }).map((_, i) => (
+            <Skeleton
+              key={i}
+              className={cn(
+                "h-52 shrink-0 rounded-2xl",
+                isGrid ? "w-full lg:h-64" : "w-44"
+              )}
+            />
           ))}
         </div>
       </section>
@@ -45,7 +62,7 @@ export function PlayersNearClubWidget({ onSearchNearby }: PlayersNearClubWidgetP
   if (players.length === 0) return null;
 
   return (
-    <section className="mb-8">
+    <section className={cn("mb-8", isGrid && "mb-0")}>
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -68,9 +85,20 @@ export function PlayersNearClubWidget({ onSearchNearby }: PlayersNearClubWidgetP
           </button>
         ) : null}
       </div>
-      <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 hide-scrollbar">
+      <div
+        className={cn(
+          "-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 hide-scrollbar",
+          isGrid &&
+            "mx-0 grid grid-cols-1 gap-4 overflow-visible px-0 sm:grid-cols-2 xl:grid-cols-3"
+        )}
+      >
         {players.map((p) => (
-          <PlayerCard key={p.user_id} player={p} distanceKm={p.distanceKm} compact />
+          <PlayerCard
+            key={p.user_id}
+            player={p}
+            distanceKm={p.distanceKm}
+            compact={!isGrid}
+          />
         ))}
       </div>
     </section>

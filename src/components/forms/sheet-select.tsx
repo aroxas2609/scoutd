@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type MouseEvent } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import {
   Sheet,
@@ -8,6 +8,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 export type SheetSelectOption = {
@@ -49,19 +58,11 @@ function flattenOptions(
   return groups?.flatMap((g) => g.options) ?? [];
 }
 
-export function SheetSelect({
-  value,
-  onValueChange,
-  options,
-  groups,
-  placeholder = "Select",
-  sheetTitle = "Choose an option",
-  error,
-  className,
-  allowClear,
-  clearLabel = "Any",
-}: SheetSelectProps) {
-  const [open, setOpen] = useState(false);
+function useSheetSelectState(
+  value: string,
+  options?: SheetSelectOption[],
+  groups?: SheetSelectGroup[]
+) {
   const allOptions = useMemo(() => flattenOptions(options, groups), [options, groups]);
 
   const selectedLabel = useMemo(() => {
@@ -72,6 +73,62 @@ export function SheetSelect({
     if (option.description) return `${option.label} ${option.description}`;
     return option.label;
   }, [value, allOptions]);
+
+  return { allOptions, selectedLabel };
+}
+
+type SheetSelectPartsProps = SheetSelectProps & {
+  selectedLabel: string | null;
+};
+
+function SheetSelectTriggerButton({
+  selectedLabel,
+  placeholder,
+  error,
+  className,
+  sheetTitle,
+  onClick,
+}: {
+  selectedLabel: string | null;
+  placeholder: string;
+  error?: boolean;
+  className?: string;
+  sheetTitle: string;
+  onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        sheetSelectTriggerClass,
+        error && "border-red-400/50",
+        !selectedLabel && "text-muted-foreground",
+        className
+      )}
+      aria-label={sheetTitle}
+    >
+      <span className="truncate text-left">{selectedLabel ?? placeholder}</span>
+      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+    </button>
+  );
+}
+
+/** Mobile: bottom sheet (unchanged). */
+function SheetSelectMobile({
+  value,
+  onValueChange,
+  options,
+  groups,
+  placeholder = "Select",
+  sheetTitle = "Choose an option",
+  error,
+  className,
+  allowClear,
+  clearLabel = "Any",
+  selectedLabel,
+}: SheetSelectPartsProps) {
+  const [open, setOpen] = useState(false);
 
   function select(next: string) {
     onValueChange(next);
@@ -119,22 +176,17 @@ export function SheetSelect({
 
   return (
     <>
-      <button
-        type="button"
+      <SheetSelectTriggerButton
+        selectedLabel={selectedLabel}
+        placeholder={placeholder}
+        error={error}
+        className={className}
+        sheetTitle={sheetTitle}
         onClick={(e) => {
           e.preventDefault();
           setOpen(true);
         }}
-        className={cn(
-          sheetSelectTriggerClass,
-          error && "border-red-400/50",
-          !selectedLabel && "text-muted-foreground",
-          className
-        )}
-      >
-        <span className="truncate text-left">{selectedLabel ?? placeholder}</span>
-        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-      </button>
+      />
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
@@ -186,6 +238,166 @@ export function SheetSelect({
           </div>
         </SheetContent>
       </Sheet>
+    </>
+  );
+}
+
+function DesktopSelectOption({
+  option,
+  selected,
+  onSelect,
+}: {
+  option: SheetSelectOption;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <DropdownMenuItem
+      className={cn(
+        "flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-foreground focus:bg-[var(--accent-brand)]/15 focus:text-foreground",
+        selected && "bg-[var(--accent-brand)]/10"
+      )}
+      onClick={(e) => {
+        e.preventDefault();
+        onSelect();
+      }}
+    >
+      <span className="flex min-w-0 flex-1 items-center gap-2.5">
+        {option.description ? (
+          <>
+            <span className="w-9 shrink-0 text-xs font-semibold tabular-nums">
+              {option.label}
+            </span>
+            <span className="truncate text-sm text-muted-foreground">
+              {option.description}
+            </span>
+          </>
+        ) : (
+          <span className="text-sm">{option.label}</span>
+        )}
+      </span>
+      {selected ? (
+        <Check className="h-4 w-4 shrink-0 text-[var(--accent-electric)]" />
+      ) : null}
+    </DropdownMenuItem>
+  );
+}
+
+/** Desktop: anchored dropdown menu aligned to the trigger. */
+function SheetSelectDesktop({
+  value,
+  onValueChange,
+  options,
+  groups,
+  placeholder = "Select",
+  sheetTitle = "Choose an option",
+  error,
+  className,
+  allowClear,
+  clearLabel = "Any",
+  selectedLabel,
+}: SheetSelectPartsProps) {
+  const [open, setOpen] = useState(false);
+
+  function select(next: string) {
+    onValueChange(next);
+    setOpen(false);
+  }
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger
+        className={cn(
+          sheetSelectTriggerClass,
+          error && "border-red-400/50",
+          !selectedLabel && "text-muted-foreground",
+          className
+        )}
+        aria-label={sheetTitle}
+      >
+        <span className="truncate text-left">{selectedLabel ?? placeholder}</span>
+        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        sideOffset={6}
+        className="max-h-[min(20rem,70vh)] w-[var(--anchor-width)] min-w-[var(--anchor-width)] overflow-y-auto border border-white/10 bg-[var(--bg-graphite)] p-1.5 shadow-xl"
+      >
+        {allowClear ? (
+          <>
+            <DropdownMenuItem
+              className={cn(
+                "cursor-pointer rounded-lg px-2.5 py-2 text-sm focus:bg-[var(--accent-brand)]/15 focus:text-foreground",
+                !value && "bg-[var(--accent-brand)]/10 font-medium"
+              )}
+              onClick={(e) => {
+                e.preventDefault();
+                select("");
+              }}
+            >
+              <span className="flex flex-1 items-center justify-between gap-2">
+                {clearLabel}
+                {!value ? (
+                  <Check className="h-4 w-4 text-[var(--accent-electric)]" />
+                ) : null}
+              </span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="my-1 bg-white/10" />
+          </>
+        ) : null}
+
+        {groups?.length ? (
+          groups.map((group, index) => (
+            <DropdownMenuGroup key={group.label}>
+              {index > 0 ? <DropdownMenuSeparator className="my-1 bg-white/10" /> : null}
+              <DropdownMenuLabel className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {group.label}
+              </DropdownMenuLabel>
+              {group.options.map((option) => (
+                <DesktopSelectOption
+                  key={option.value}
+                  option={option}
+                  selected={value === option.value}
+                  onSelect={() => select(option.value)}
+                />
+              ))}
+            </DropdownMenuGroup>
+          ))
+        ) : (
+          options?.map((option) => (
+            <DesktopSelectOption
+              key={option.value}
+              option={option}
+              selected={value === option.value}
+              onSelect={() => select(option.value)}
+            />
+          ))
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export function SheetSelect(props: SheetSelectProps) {
+  const { allOptions, selectedLabel } = useSheetSelectState(
+    props.value,
+    props.options,
+    props.groups
+  );
+
+  const partsProps: SheetSelectPartsProps = {
+    ...props,
+    selectedLabel,
+  };
+
+  return (
+    <>
+      <div className="lg:hidden">
+        <SheetSelectMobile {...partsProps} />
+      </div>
+      <div className="hidden lg:block">
+        <SheetSelectDesktop {...partsProps} />
+      </div>
     </>
   );
 }

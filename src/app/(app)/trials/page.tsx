@@ -48,7 +48,7 @@ export default function TrialsPage() {
             }
           />
         ) : (
-          <ul className="space-y-3">
+          <ul className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
             {trials.map((t) => (
               <TrialListItem
                 key={t.id}

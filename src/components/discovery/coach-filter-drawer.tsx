@@ -58,7 +58,7 @@ export function CoachFilterDrawer({ filters, onChange }: CoachFilterDrawerProps)
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         className={cn(
-          "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 transition-colors hover:bg-white/[0.08]",
+          "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 transition-colors hover:bg-white/[0.08] lg:hidden",
           activeCount > 0 && "border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/10"
         )}
         aria-label="Filter clubs"

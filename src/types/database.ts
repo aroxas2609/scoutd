@@ -189,9 +189,6 @@ export interface PlayerSearchFilters {
   sortByNearest?: boolean;
   /** Set when coach enables My District filter */
   coachAssociationId?: string;
-  samePostcodeAsCoach?: boolean;
-  /** Internal: coach club postcode when samePostcodeAsCoach is on */
-  coachPostcode?: string;
 }
 
 export interface CoachSearchFilters {

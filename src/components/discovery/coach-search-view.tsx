@@ -77,7 +77,7 @@ export function CoachSearchView() {
         </div>
       ) : (
         <>
-          <div className="flex flex-col gap-2 px-4 pb-8 pt-4">
+          <div className="grid gap-3 px-4 pb-8 pt-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
             {showInitialSkeleton ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton key={i} className="aspect-[16/10] rounded-2xl" />

@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { normalisePostcode } from "@/lib/football/association-postcodes";
 import {
   buildPlayerSearchOrClause,
   escapeIlikePattern,
@@ -7,6 +6,7 @@ import {
 import {
   DEFAULT_RADIUS_KM,
   filterPlayersByRadius,
+  getPostcodesWithinRadius,
   sortPlayersByDistance,
   type AssociationPostcodesMap,
   type PostcodeLocationsMap,
@@ -73,13 +73,6 @@ async function applyPlayerSearchFilters(
     query = query.eq("association_id", filters.coachAssociationId);
   }
 
-  if (filters.samePostcodeAsCoach) {
-    const coachPostcode = normalisePostcode(filters.coachPostcode);
-    if (coachPostcode) {
-      query = query.eq("postcode", coachPostcode);
-    }
-  }
-
   return query;
 }
 
@@ -109,6 +102,20 @@ export async function searchPlayers(
     .order("updated_at", { ascending: false });
 
   if (nearby) {
+    const coachLocation: SearchLocation = {
+      lat: filters.latitude!,
+      lng: filters.longitude!,
+      label: "Club",
+      source: "profile",
+    };
+    const postcodesInRadius = getPostcodesWithinRadius(
+      coachLocation,
+      filters.radiusKm!,
+      context.locationsMap
+    );
+    if (postcodesInRadius.length > 0) {
+      query = query.in("postcode", postcodesInRadius);
+    }
     query = query.limit(NEARBY_CANDIDATE_LIMIT);
   } else {
     query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);

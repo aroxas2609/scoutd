@@ -58,6 +58,64 @@ export function getLocationFromPostcode(
   };
 }
 
+/** Match suburb name against seeded postcode_locations rows. */
+export function getLocationFromSuburbName(
+  suburb: string | null | undefined,
+  locationsMap: PostcodeLocationsMap
+): SearchLocation | null {
+  const term = suburb?.trim().toLowerCase();
+  if (!term) return null;
+  for (const [postcode, entry] of locationsMap) {
+    if (entry.suburb?.trim().toLowerCase() === term) {
+      return getLocationFromPostcode(postcode, locationsMap, entry.suburb);
+    }
+  }
+  return null;
+}
+
+/** Resolve location from free-text suburb/postcode in profile location fields. */
+export function getLocationFromFreeText(
+  location: string | null | undefined,
+  locationsMap: PostcodeLocationsMap
+): SearchLocation | null {
+  const text = location?.trim().toLowerCase();
+  if (!text) return null;
+
+  const postcodeMatch = text.match(/\b(\d{4})\b/);
+  if (postcodeMatch) {
+    const fromPostcode = getLocationFromPostcode(postcodeMatch[1], locationsMap);
+    if (fromPostcode) return fromPostcode;
+  }
+
+  for (const [postcode, entry] of locationsMap) {
+    const suburb = entry.suburb?.trim().toLowerCase();
+    if (suburb && text.includes(suburb)) {
+      return getLocationFromPostcode(postcode, locationsMap, entry.suburb);
+    }
+  }
+
+  return null;
+}
+
+/** Postcodes whose centroids fall within radiusKm of the search origin. */
+export function getPostcodesWithinRadius(
+  origin: SearchLocation,
+  radiusKm: number,
+  locationsMap: PostcodeLocationsMap
+): string[] {
+  const postcodes: string[] = [];
+  for (const [postcode, entry] of locationsMap) {
+    const distanceKm = calculateDistanceKm(
+      origin.lat,
+      origin.lng,
+      entry.lat,
+      entry.lng
+    );
+    if (distanceKm <= radiusKm) postcodes.push(postcode);
+  }
+  return postcodes;
+}
+
 export function getAssociationCentroid(
   associationId: string | null | undefined,
   locationsMap: PostcodeLocationsMap,
@@ -125,14 +183,20 @@ export function getCoachSearchLocation(
 }
 
 export function getPlayerSearchLocation(
-  player: LocationProfile,
+  player: LocationProfile & {
+    location?: string | null;
+    location_public?: string | null;
+  },
   locationsMap: PostcodeLocationsMap,
   associationPostcodes: AssociationPostcodesMap
 ): SearchLocation | null {
   const labelParts = [player.suburb?.trim(), player.postcode?.trim()].filter(Boolean) as string[];
+  const freeText = player.location_public ?? player.location;
   return (
     fromProfileCoords(player, labelParts) ??
     getLocationFromPostcode(player.postcode, locationsMap, player.suburb) ??
+    getLocationFromSuburbName(player.suburb, locationsMap) ??
+    getLocationFromFreeText(freeText, locationsMap) ??
     getAssociationCentroid(player.association_id, locationsMap, associationPostcodes)
   );
 }

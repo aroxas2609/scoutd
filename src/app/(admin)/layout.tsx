@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/admin", label: "Overview" },
@@ -16,7 +17,9 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   const { data: profile } = await supabase
@@ -29,7 +32,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-dvh bg-[var(--bg-deep)]">
-      <header className="border-b border-white/10 px-6 py-4">
+      <header className="border-b border-white/10 px-6 py-4 lg:hidden">
         <Link href="/admin" className="font-display text-xl font-bold text-[var(--accent-electric)]">
           Scoutd Admin
         </Link>
@@ -41,7 +44,44 @@ export default async function AdminLayout({
           ))}
         </nav>
       </header>
-      <main className="mx-auto max-w-6xl p-6">{children}</main>
+
+      <div className="lg:flex">
+        <aside className="hidden lg:flex lg:w-56 lg:shrink-0 lg:flex-col lg:border-r lg:border-white/10 lg:px-4 lg:py-6">
+          <Link
+            href="/admin"
+            className="font-display text-lg font-bold text-[var(--accent-brand)]"
+          >
+            Scoutd Admin
+          </Link>
+          <nav className="mt-8 flex flex-col gap-1">
+            {links.map((l) => (
+              <AdminNavLink key={l.href} href={l.href} label={l.label} />
+            ))}
+          </nav>
+          <Link
+            href="/search"
+            className="mt-auto pt-8 text-sm text-muted-foreground hover:text-foreground"
+          >
+            Back to app
+          </Link>
+        </aside>
+        <main className="mx-auto min-w-0 flex-1 max-w-6xl p-6 lg:max-w-none lg:px-10 lg:py-8">
+          {children}
+        </main>
+      </div>
     </div>
+  );
+}
+
+function AdminNavLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
+      )}
+    >
+      {label}
+    </Link>
   );
 }

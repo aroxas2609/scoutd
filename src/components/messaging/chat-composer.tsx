@@ -12,7 +12,7 @@ interface ChatComposerProps {
 export function ChatComposer({ value, onChange, onSubmit, disabled }: ChatComposerProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[200] border-t border-white/[0.06] bg-[var(--bg-deep)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
-      <form onSubmit={onSubmit} className="mx-auto flex max-w-lg gap-2 px-4 py-3">
+      <form onSubmit={onSubmit} className="mx-auto flex w-full max-w-lg gap-2 px-4 py-3 lg:max-w-3xl">
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}

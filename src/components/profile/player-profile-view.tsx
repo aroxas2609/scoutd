@@ -65,8 +65,8 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
     player.willing_to_travel != null;
 
   return (
-    <div className="pb-28">
-      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-white/[0.06] bg-[var(--bg-deep)]/90 px-4 py-3 backdrop-blur-md">
+    <div className="pb-28 lg:mx-auto lg:max-w-5xl lg:pb-8">
+      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-white/[0.06] bg-[var(--bg-deep)]/90 px-4 py-3 backdrop-blur-md lg:px-6">
         <button
           type="button"
           onClick={() => router.back()}
@@ -78,8 +78,9 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
         {!isOwn ? <ReportBlockMenu userId={player.user_id} /> : <div className="w-10" />}
       </div>
 
-      <div className="px-4 pt-6">
-        <div className="flex gap-4">
+      <div className="px-4 pt-6 lg:px-6 lg:pt-8">
+        <div className="flex gap-4 lg:items-start lg:justify-between">
+          <div className="flex min-w-0 flex-1 gap-4 lg:gap-6">
           {isOwn ? (
             <ProfilePhotoUpload
               userId={player.user_id}
@@ -88,7 +89,7 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
               compact
             />
           ) : (
-            <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-full border border-white/[0.1] bg-[var(--bg-elevated)]">
+            <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-full border border-white/[0.1] bg-[var(--bg-elevated)] lg:h-28 lg:w-28">
               {player.profiles?.avatar_url ? (
                 <Image
                   src={player.profiles.avatar_url}
@@ -107,7 +108,7 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
 
           <div className="min-w-0 flex-1 pt-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-semibold leading-tight tracking-tight">{name}</h1>
+              <h1 className="text-xl font-semibold leading-tight tracking-tight lg:text-3xl">{name}</h1>
               {player.verified_at ? <VerificationBadge /> : null}
             </div>
             {metaParts.length > 0 ? (
@@ -117,6 +118,12 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
               <AvailabilityBadge status={availability} />
             </div>
           </div>
+          </div>
+          {!isOwn && isCoachViewer ? (
+            <div className="mt-4 shrink-0 lg:mt-0 lg:max-w-xs lg:self-start">
+              <PlayerProfileCoachActions playerId={player.user_id} />
+            </div>
+          ) : null}
         </div>
 
         {isOwn ? (
@@ -129,11 +136,7 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
           </div>
         ) : null}
 
-        {!isOwn && isCoachViewer ? (
-          <PlayerProfileCoachActions playerId={player.user_id} />
-        ) : null}
-
-        <Tabs defaultValue="overview" className="mt-6">
+        <Tabs defaultValue="overview" className="mt-6 lg:mt-8">
           <TabsList
             variant="line"
             className="h-11 w-full rounded-xl border border-white/[0.08] bg-[var(--bg-graphite)] p-1"
@@ -158,9 +161,9 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="mt-4 space-y-4">
+          <TabsContent value="overview" className="mt-4 space-y-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
             {hasOverviewDetails ? (
-              <ProfileSection title="Details">
+              <ProfileSection title="Details" className="lg:col-span-1">
                 <ProfileDetailRow
                   icon={MapPin}
                   label="Suburb"
@@ -201,7 +204,7 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
             )}
 
             {player.achievements?.length > 0 ? (
-              <ProfileSection title="Achievements">
+              <ProfileSection title="Achievements" className="lg:col-span-1">
                 {player.achievements.map((a, i) => (
                   <ProfileDetailRow
                     key={i}

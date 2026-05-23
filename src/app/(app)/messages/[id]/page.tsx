@@ -60,11 +60,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   }
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-white/[0.06] bg-[var(--bg-deep)]/90 px-4 py-3 pt-[env(safe-area-inset-top)] backdrop-blur-md">
+    <div className="flex min-h-dvh flex-col lg:min-h-0 lg:flex-1">
+      <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-white/[0.06] bg-[var(--bg-deep)]/90 px-4 py-3 pt-[env(safe-area-inset-top)] backdrop-blur-md lg:pt-3">
         <Link
           href="/messages"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-[var(--bg-surface)]"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-[var(--bg-surface)] lg:hidden"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>

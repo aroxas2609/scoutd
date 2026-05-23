@@ -51,8 +51,8 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
     coach.contact_phone_alt;
 
   return (
-    <div className="pb-28">
-      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-white/[0.06] bg-[var(--bg-deep)]/90 px-4 py-3 backdrop-blur-md">
+    <div className="pb-28 lg:mx-auto lg:max-w-5xl lg:pb-8">
+      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-white/[0.06] bg-[var(--bg-deep)]/90 px-4 py-3 backdrop-blur-md lg:px-6">
         <button
           type="button"
           onClick={() => router.back()}
@@ -65,20 +65,21 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
       </div>
 
       {coach.banner_url ? (
-        <div className="relative mx-4 mt-4 aspect-[2.2/1] overflow-hidden rounded-2xl bg-[var(--bg-elevated)]">
+        <div className="relative mx-4 mt-4 aspect-[2.2/1] overflow-hidden rounded-2xl bg-[var(--bg-elevated)] lg:mx-6 lg:aspect-[21/9] lg:rounded-3xl">
           <Image
             src={coach.banner_url}
             alt=""
             fill
             className="object-cover"
-            sizes="(max-width: 512px) 100vw"
+            sizes="(max-width: 1024px) 100vw, 1024px"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-deep)]/80 to-transparent" />
         </div>
       ) : null}
 
-      <div className={coach.banner_url ? "px-4 pt-4" : "px-4 pt-6"}>
-        <div className="flex gap-4">
+      <div className={coach.banner_url ? "px-4 pt-4 lg:px-6" : "px-4 pt-6 lg:px-6 lg:pt-8"}>
+        <div className="flex gap-4 lg:items-start lg:justify-between">
+          <div className="flex min-w-0 flex-1 gap-4 lg:gap-6">
           {isOwn ? (
             <ProfilePhotoUpload
               userId={coach.user_id}
@@ -87,7 +88,7 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
               compact
             />
           ) : (
-            <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-full border border-white/[0.1] bg-[var(--bg-elevated)]">
+            <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-full border border-white/[0.1] bg-[var(--bg-elevated)] lg:h-28 lg:w-28">
               {logo ? (
                 <Image src={logo} alt={heading.primary} fill className="object-cover" sizes="88px" />
               ) : (
@@ -100,7 +101,7 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
 
           <div className="min-w-0 flex-1 pt-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-semibold leading-tight">{heading.primary}</h1>
+              <h1 className="text-xl font-semibold leading-tight lg:text-3xl">{heading.primary}</h1>
               {coach.verified_at ? <VerificationBadge /> : null}
             </div>
             {heading.secondary ? (
@@ -112,10 +113,17 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
               </p>
             )}
           </div>
+          </div>
+          {!isOwn && isPlayerViewer ? (
+            <div className="mt-4 shrink-0 lg:mt-0 lg:max-w-xs">
+              <MessagePlayerButton playerId={coach.user_id} />
+            </div>
+          ) : null}
         </div>
 
+        <div className="mt-6 space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
         {hasContact ? (
-          <div className="mt-6">
+          <div className="lg:col-span-1">
             <ProfileSection title="Contact">
               <ProfileDetailRow icon={MapPin} label="Address" value={coach.address} />
               {coach.contact_email ? (
@@ -147,7 +155,7 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
         ) : null}
 
         {coach.recruiting_needs ? (
-          <div className="mt-4 rounded-2xl border border-white/[0.08] bg-[var(--bg-surface)] p-4">
+          <div className="rounded-2xl border border-white/[0.08] bg-[var(--bg-surface)] p-4 lg:col-span-1">
             <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Recruiting needs
             </h3>
@@ -156,7 +164,7 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
         ) : null}
 
         {coach.about ? (
-          <div className="mt-4 rounded-2xl border border-white/[0.08] bg-[var(--bg-surface)] p-4">
+          <div className="rounded-2xl border border-white/[0.08] bg-[var(--bg-surface)] p-4 lg:col-span-2">
             <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               About
             </h3>
@@ -165,14 +173,11 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
         ) : null}
 
         {coach.age_groups?.length > 0 ? (
-          <CoachAgeGroupsCard codes={coach.age_groups} />
-        ) : null}
-
-        {!isOwn && isPlayerViewer ? (
-          <div className="mt-6">
-            <MessagePlayerButton playerId={coach.user_id} />
+          <div className="lg:col-span-2">
+            <CoachAgeGroupsCard codes={coach.age_groups} />
           </div>
         ) : null}
+        </div>
 
         {isOwn ? (
           <ProfileAccountSection>

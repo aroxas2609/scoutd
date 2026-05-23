@@ -1,5 +1,15 @@
+import { LandingDesktop } from "@/components/marketing/landing-desktop";
 import { WelcomeScreen } from "@/components/marketing/welcome-screen";
 
 export default function LandingPage() {
-  return <WelcomeScreen />;
+  return (
+    <>
+      <div className="lg:hidden">
+        <WelcomeScreen />
+      </div>
+      <div className="hidden lg:block">
+        <LandingDesktop />
+      </div>
+    </>
+  );
 }

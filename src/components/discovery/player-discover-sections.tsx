@@ -48,13 +48,13 @@ export function PlayerDiscoverSections({ hideNearbySection = false }: PlayerDisc
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 lg:space-y-10">
       {featuredList.length > 0 ? (
         <section>
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Featured
           </h2>
-          <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 hide-scrollbar">
+          <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 hide-scrollbar lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:px-0 xl:grid-cols-4">
             {featuredList.map((p) => (
               <PlayerCard key={p.user_id} player={p} compact />
             ))}
@@ -66,7 +66,7 @@ export function PlayerDiscoverSections({ hideNearbySection = false }: PlayerDisc
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Trending
           </h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
             {trendingList.slice(0, 4).map((p) => (
               <PlayerCard key={p.user_id} player={p} />
             ))}
@@ -78,7 +78,7 @@ export function PlayerDiscoverSections({ hideNearbySection = false }: PlayerDisc
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Nearby
           </h2>
-          <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 hide-scrollbar">
+          <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 hide-scrollbar lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:px-0 xl:grid-cols-4">
             {nearbyList.map((p) => (
               <PlayerCard key={p.user_id} player={p} distanceKm={p.distanceKm} compact />
             ))}
@@ -90,7 +90,7 @@ export function PlayerDiscoverSections({ hideNearbySection = false }: PlayerDisc
           <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Recently active
           </h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
             {activeList.slice(0, 4).map((p) => (
               <PlayerCard key={p.user_id} player={p} />
             ))}
