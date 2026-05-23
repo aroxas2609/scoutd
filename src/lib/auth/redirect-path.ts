@@ -14,7 +14,7 @@ export function getSetupRedirectPath(profile: ProfileGate): string | null {
 
 /** After login/signup or when visiting auth pages while already signed in. */
 export function getPostLoginRedirect(profile: ProfileGate): string {
-  return getSetupRedirectPath(profile) ?? "/discover";
+  return getSetupRedirectPath(profile) ?? "/search";
 }
 
 export function shouldRedirect(path: string, target: string): boolean {

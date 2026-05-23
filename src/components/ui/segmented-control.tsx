@@ -36,7 +36,10 @@ export function SegmentedControl<T extends string>({
             type="button"
             role="tab"
             aria-selected={active}
-            onClick={() => onChange(segment.value)}
+            onClick={(e) => {
+              e.preventDefault();
+              onChange(segment.value);
+            }}
             className={cn(
               "flex-1 rounded-lg py-2 text-sm font-medium transition-colors",
               active

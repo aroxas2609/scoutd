@@ -10,7 +10,9 @@ export default function SignupPage() {
       </Link>
       <GlassCard className="p-8">
         <h1 className="font-display text-2xl font-bold">Join Scoutd</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Find Your Next Player</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Email and password only — you&apos;ll add your profile details next.
+        </p>
         <SignupForm />
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{" "}

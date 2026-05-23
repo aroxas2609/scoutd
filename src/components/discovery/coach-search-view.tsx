@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryState } from "nuqs";
 import { AppHeader } from "@/components/layout/app-header";
 import { CoachCard } from "@/components/discovery/coach-card";
+import { CoachDiscoverSections } from "@/components/discovery/coach-discover-sections";
 import { CoachFilterDrawer } from "@/components/discovery/coach-filter-drawer";
 import { useCoachSearch } from "@/features/coaches/hooks";
 import { Input } from "@/components/ui/input";
@@ -41,10 +42,16 @@ export function CoachSearchView() {
     [search.data]
   );
   const showInitialSkeleton = search.isPending && coaches.length === 0;
+  const filterCount = [filters.league, filters.location].filter(Boolean).length;
+  const hasActiveFilters = filterCount > 0;
+  const isBrowsing = !debouncedQuery.trim() && !hasActiveFilters;
 
   return (
     <div>
-      <AppHeader title="Search" subtitle="Clubs and coaches" />
+      <AppHeader
+        title="Explore"
+        subtitle={isBrowsing ? "Browse clubs or search below" : "Clubs and coaches"}
+      />
       <div className="sticky top-[65px] z-30 border-b border-white/[0.06] bg-[var(--bg-deep)]/90 px-4 py-3 backdrop-blur-md">
         <div className="flex gap-2">
           <div className="relative min-w-0 flex-1">
@@ -52,7 +59,7 @@ export function CoachSearchView() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value || null)}
-              placeholder="Club, league, location…"
+              placeholder="Club, association, location…"
               className="pl-10"
             />
           </div>
@@ -64,24 +71,32 @@ export function CoachSearchView() {
         <p className="px-4 py-2 text-center text-xs text-muted-foreground">Updating…</p>
       ) : null}
 
-      <div className="grid gap-3 px-4 pb-8 pt-4 sm:grid-cols-2">
-        {showInitialSkeleton ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-[16/10] rounded-2xl" />
-          ))
-        ) : coaches.length === 0 && !search.isFetching ? (
-          <div className="col-span-full">
-            <EmptyStateCinematic
-              icon={<Building2 className="h-6 w-6" />}
-              title="No clubs found"
-              description="Try another search or adjust filters."
-            />
+      {isBrowsing ? (
+        <div className="px-4 pb-8 pt-2">
+          <CoachDiscoverSections />
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-col gap-2 px-4 pb-8 pt-4">
+            {showInitialSkeleton ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-[16/10] rounded-2xl" />
+              ))
+            ) : coaches.length === 0 && !search.isFetching ? (
+              <div className="col-span-full">
+                <EmptyStateCinematic
+                  icon={<Building2 className="h-6 w-6" />}
+                  title="No clubs found"
+                  description="Try another search or adjust filters."
+                />
+              </div>
+            ) : (
+              coaches.map((c) => <CoachCard key={c.user_id} coach={c} />)
+            )}
           </div>
-        ) : (
-          coaches.map((c) => <CoachCard key={c.user_id} coach={c} />)
-        )}
-      </div>
-      <div ref={loadMoreRef} className="h-4" />
+          <div ref={loadMoreRef} className="h-4" />
+        </>
+      )}
     </div>
   );
 }

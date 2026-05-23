@@ -102,8 +102,7 @@ export async function getRecentlyActive(supabase: SupabaseClient) {
 
 export function computeCompletionScore(profile: Partial<PlayerProfile>): number {
   const fields = [
-    profile.cover_url,
-    profile.age,
+    profile.age ?? profile.date_of_birth,
     profile.location,
     profile.position,
     profile.dominant_foot,

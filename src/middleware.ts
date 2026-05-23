@@ -12,7 +12,7 @@ const protectedPrefixes = [
   "/shortlist",
   "/onboarding",
 ];
-const authRoutes = ["/login", "/signup", "/role"];
+const authRoutes = ["/login", "/signup", "/role", "/forgot-password", "/update-password"];
 const adminPrefix = "/admin";
 
 export async function middleware(request: NextRequest) {
@@ -48,6 +48,9 @@ export async function middleware(request: NextRequest) {
       if (path === "/role" && setupTarget === "/role") {
         return supabaseResponse;
       }
+      if (path === "/update-password" || path === "/forgot-password") {
+        return supabaseResponse;
+      }
       const authTarget = getPostLoginRedirect(profile);
       if (shouldRedirect(path, authTarget)) {
         const url = request.nextUrl.clone();
@@ -65,7 +68,7 @@ export async function middleware(request: NextRequest) {
 
     if (profile?.role === "player" && path.startsWith("/shortlist")) {
       const url = request.nextUrl.clone();
-      url.pathname = "/discover";
+      url.pathname = "/search";
       return NextResponse.redirect(url);
     }
   }
@@ -79,7 +82,7 @@ export async function middleware(request: NextRequest) {
 
     if (profile?.role !== "admin") {
       const url = request.nextUrl.clone();
-      url.pathname = "/discover";
+      url.pathname = "/search";
       return NextResponse.redirect(url);
     }
   }

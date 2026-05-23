@@ -17,10 +17,6 @@ export function SignupForm() {
   return (
     <form action={handleSubmit} className="mt-6 space-y-4">
       <div>
-        <Label htmlFor="fullName">Full name</Label>
-        <Input id="fullName" name="fullName" required className="mt-1 bg-white/5" />
-      </div>
-      <div>
         <Label htmlFor="email">Email</Label>
         <Input id="email" name="email" type="email" required className="mt-1 bg-white/5" />
       </div>

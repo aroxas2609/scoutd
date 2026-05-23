@@ -18,7 +18,13 @@ import {
   Plane,
 } from "lucide-react";
 import { PlayerProfileCoachActions } from "@/components/profile/player-profile-coach-actions";
+import { ChangePasswordSection } from "@/components/auth/change-password-section";
+import { DeleteAccountSection } from "@/components/auth/delete-account-section";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import {
+  ProfileAccountSection,
+  ProfileSettingsCard,
+} from "@/components/profile/profile-settings";
 import { ProfilePhotoUpload } from "@/components/profile/profile-photo-upload";
 import { PlayerProfileEditDialog } from "@/components/profile/player-profile-edit-dialog";
 import { PlayerMediaSection } from "@/components/profile/player-media-section";
@@ -68,14 +74,7 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
         {!isOwn ? <ReportBlockMenu userId={player.user_id} /> : <div className="w-10" />}
       </div>
 
-      {player.cover_url ? (
-        <div className="relative mx-4 mt-4 aspect-[2.2/1] overflow-hidden rounded-2xl bg-[var(--bg-elevated)]">
-          <Image src={player.cover_url} alt="" fill className="object-cover" sizes="(max-width: 512px) 100vw" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-deep)]/80 to-transparent" />
-        </div>
-      ) : null}
-
-      <div className={player.cover_url ? "px-4 pt-4" : "px-4 pt-6"}>
+      <div className="px-4 pt-6">
         <div className="flex gap-4">
           {isOwn ? (
             <ProfilePhotoUpload
@@ -219,10 +218,14 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
         </Tabs>
 
         {isOwn ? (
-          <div className="mt-8 space-y-3 border-t border-white/[0.06] pt-6">
-            <PlayerProfileEditDialog player={player} />
+          <ProfileAccountSection>
+            <ProfileSettingsCard>
+              <PlayerProfileEditDialog player={player} embedded />
+              <ChangePasswordSection embedded />
+            </ProfileSettingsCard>
             <SignOutButton />
-          </div>
+            <DeleteAccountSection />
+          </ProfileAccountSection>
         ) : null}
       </div>
     </div>

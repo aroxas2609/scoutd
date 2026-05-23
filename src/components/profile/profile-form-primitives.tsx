@@ -1,13 +1,7 @@
 "use client";
 
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SheetSelect, type SheetSelectOption } from "@/components/forms/sheet-select";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { cn } from "@/lib/utils";
 
@@ -40,18 +34,23 @@ export function ProfileFormSection({
 
 export function ProfileFormField({
   label,
+  labelExtra,
   hint,
   error,
   children,
 }: {
   label: string;
+  labelExtra?: React.ReactNode;
   hint?: string;
   error?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-sm font-medium text-foreground">{label}</Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-sm font-medium text-foreground">{label}</Label>
+        {labelExtra}
+      </div>
       {children}
       {hint && !error ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
       {error ? <p className="text-xs text-red-400">{error}</p> : null}
@@ -67,30 +66,30 @@ export function ProfileFormSelect({
   onValueChange,
   options,
   placeholder = "Select",
+  sheetTitle,
 }: {
   label: string;
   value: string;
   onValueChange: (value: string) => void;
   options: SelectOption[];
   placeholder?: string;
+  sheetTitle?: string;
 }) {
+  const sheetOptions: SheetSelectOption[] = options.map((o) => ({
+    value: o.value,
+    label: o.label,
+  }));
+
   return (
     <ProfileFormField label={label}>
-      <Select
+      <SheetSelect
         value={value}
-        onValueChange={(v) => onValueChange(v ?? options[0]?.value ?? "")}
-      >
-        <SelectTrigger className={cn(profileFieldClass, "w-full")}>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent className="border-white/10 bg-[var(--bg-elevated)]">
-          {options.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        onValueChange={onValueChange}
+        options={sheetOptions}
+        placeholder={placeholder}
+        sheetTitle={sheetTitle ?? label}
+        className={cn(profileFieldClass, "h-11")}
+      />
     </ProfileFormField>
   );
 }

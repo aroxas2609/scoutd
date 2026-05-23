@@ -2,19 +2,34 @@
 
 import { LogOut } from "lucide-react";
 import { signOut } from "@/features/auth/actions";
-import { Button } from "@/components/ui/button";
+import { ProfileSettingsCard, ProfileSettingsRow } from "@/components/profile/profile-settings";
 
-export function SignOutButton() {
+export function SignOutButton({ embedded }: { embedded?: boolean }) {
+  if (embedded) {
+    return (
+      <form action={signOut}>
+        <ProfileSettingsRow
+          type="submit"
+          icon={LogOut}
+          label="Log out"
+          chevron="none"
+          destructive
+        />
+      </form>
+    );
+  }
+
   return (
     <form action={signOut}>
-      <Button
-        type="submit"
-        variant="outline"
-        className="w-full gap-2 border-white/10 bg-white/5 text-muted-foreground hover:text-white"
-      >
-        <LogOut className="h-4 w-4" />
-        Log out
-      </Button>
+      <ProfileSettingsCard>
+        <ProfileSettingsRow
+          type="submit"
+          icon={LogOut}
+          label="Log out"
+          chevron="none"
+          destructive
+        />
+      </ProfileSettingsCard>
     </form>
   );
 }

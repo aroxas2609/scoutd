@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Archive, ArchiveRestore, Calendar, MapPin, MoreHorizontal, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Archive, ArchiveRestore, Calendar, MapPin, MoreHorizontal, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 import { PremiumButton } from "@/components/ui/premium-button";
 import {
@@ -16,11 +17,13 @@ import {
   useUpdateTrialStatus,
   type TrialInboxFilter,
 } from "@/features/trials/hooks";
-import type { TrialInvite, TrialStatus } from "@/types/database";
+import type { TrialInviteListItem } from "@/features/trials/hooks";
+import type { TrialStatus } from "@/types/database";
+import { profilePathFor } from "@/features/messaging/types";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  trial: TrialInvite;
+  trial: TrialInviteListItem;
   inboxFilter: TrialInboxFilter;
   isPlayerViewer: boolean;
 };
@@ -149,6 +152,27 @@ export function TrialListItem({ trial, inboxFilter, isPlayerViewer }: Props) {
           </DropdownMenu>
         </div>
       </div>
+
+      <Link
+        href={profilePathFor(trial.counterpartyRole, trial.counterpartyId)}
+        className="mt-3 flex items-center gap-2 rounded-lg transition-colors hover:bg-white/[0.04]"
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-[var(--bg-elevated)]">
+          <User className="h-4 w-4 text-muted-foreground" />
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate font-semibold leading-tight">{trial.displayName}</span>
+          {trial.displaySubtitle ? (
+            <span className="block truncate text-xs text-muted-foreground">
+              {trial.displaySubtitle}
+            </span>
+          ) : (
+            <span className="block text-xs text-muted-foreground">
+              {isPlayerViewer ? "View club" : "View player"}
+            </span>
+          )}
+        </span>
+      </Link>
 
       <p className="mt-3 flex items-center gap-2 text-sm">
         <Calendar className="h-4 w-4 shrink-0 text-[var(--accent-brand)]" />

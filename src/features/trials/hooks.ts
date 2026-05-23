@@ -9,9 +9,74 @@ import {
   setTrialInviteArchived,
   updateTrialStatus,
 } from "@/features/trials/actions";
-import type { TrialInvite, TrialStatus } from "@/types/database";
+import {
+  fetchParticipantsByUserIds,
+  participantDisplayName,
+} from "@/features/messaging/participant-display";
+import { messageListSubtitle } from "@/features/profile/coach-display";
+import type { TrialInvite, TrialStatus, UserRole } from "@/types/database";
 
 export type TrialInboxFilter = "active" | "archived";
+
+export type TrialInviteListItem = TrialInvite & {
+  displayName: string;
+  displaySubtitle: string | null;
+  counterpartyId: string;
+  counterpartyRole: Extract<UserRole, "coach" | "player">;
+};
+
+async function enrichTrialInvites(
+  supabase: ReturnType<typeof createClient>,
+  trials: TrialInvite[],
+  viewerRole: "coach" | "player" | null
+): Promise<TrialInviteListItem[]> {
+  if (!trials.length) return [];
+
+  if (viewerRole === "coach") {
+    const playerIds = [...new Set(trials.map((t) => t.player_id))];
+    const { data: players } = await supabase
+      .from("player_profiles")
+      .select("user_id, position, current_club, profiles(full_name)")
+      .in("user_id", playerIds);
+
+    const byPlayerId = new Map(
+      (players ?? []).map((p) => {
+        const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+        return [p.user_id, { ...p, profileName: profile?.full_name ?? null }] as const;
+      })
+    );
+
+    return trials.map((trial) => {
+      const player = byPlayerId.get(trial.player_id);
+      const name = player?.profileName?.trim() || "Player";
+      const subtitle = [player?.position, player?.current_club].filter(Boolean).join(" · ") || null;
+      return {
+        ...trial,
+        displayName: name,
+        displaySubtitle: subtitle,
+        counterpartyId: trial.player_id,
+        counterpartyRole: "player" as const,
+      };
+    });
+  }
+
+  const coachIds = [...new Set(trials.map((t) => t.coach_id))];
+  const coachesById = await fetchParticipantsByUserIds(supabase, coachIds);
+
+  return trials.map((trial) => {
+    const coach = coachesById.get(trial.coach_id);
+    const subtitle = coach
+      ? messageListSubtitle(coach) ?? coach.club_name?.trim() ?? null
+      : null;
+    return {
+      ...trial,
+      displayName: participantDisplayName(coach),
+      displaySubtitle: subtitle,
+      counterpartyId: trial.coach_id,
+      counterpartyRole: "coach" as const,
+    };
+  });
+}
 
 let trialsRealtimeRefCount = 0;
 let trialsRealtimeChannel: RealtimeChannel | null = null;
@@ -97,7 +162,8 @@ export function useTrials(inboxFilter: TrialInboxFilter = "active") {
 
       const { data, error } = await q;
       if (error) throw error;
-      return (data ?? []) as TrialInvite[];
+      const trials = (data ?? []) as TrialInvite[];
+      return enrichTrialInvites(supabase, trials, role);
     },
   });
 }

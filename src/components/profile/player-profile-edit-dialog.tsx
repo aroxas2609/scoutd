@@ -5,6 +5,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
+import {
+  ProfileSettingsDivider,
+  ProfileSettingsRow,
+} from "@/components/profile/profile-settings";
 import { toast } from "sonner";
 import {
   playerOnboardingSchema,
@@ -23,6 +27,13 @@ import {
 } from "@/components/ui/sheet";
 import { PremiumButton } from "@/components/ui/premium-button";
 import { Button } from "@/components/ui/button";
+import { AustraliaLocationField } from "@/components/forms/australia-location-field";
+import { PositionSelect } from "@/components/forms/position-select";
+import { isFootballPosition } from "@/lib/football/positions";
+import {
+  DateOfBirthField,
+  formatAgeHint,
+} from "@/components/forms/date-of-birth-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -33,30 +44,18 @@ import {
   profileFieldClass,
   profileTextareaClass,
 } from "@/components/profile/profile-form-primitives";
+import {
+  AVAILABILITY_OPTIONS,
+  DOMINANT_FOOT_OPTIONS,
+  EXPERIENCE_LEVEL_OPTIONS,
+} from "@/lib/form-options";
+
 interface PlayerProfileEditDialogProps {
   player: PlayerProfile;
+  embedded?: boolean;
 }
 
-const FOOT_OPTIONS = [
-  { value: "left", label: "Left" },
-  { value: "right", label: "Right" },
-  { value: "both", label: "Both" },
-];
-
-const EXPERIENCE_OPTIONS = [
-  { value: "academy", label: "Academy" },
-  { value: "amateur", label: "Amateur" },
-  { value: "semi_pro", label: "Semi-pro" },
-  { value: "professional", label: "Professional" },
-];
-
-const AVAILABILITY_OPTIONS = [
-  { value: "available", label: "Available" },
-  { value: "open_to_offers", label: "Open to offers" },
-  { value: "not_available", label: "Not available" },
-];
-
-export function PlayerProfileEditDialog({ player }: PlayerProfileEditDialogProps) {
+export function PlayerProfileEditDialog({ player, embedded }: PlayerProfileEditDialogProps) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
@@ -91,14 +90,22 @@ export function PlayerProfileEditDialog({ player }: PlayerProfileEditDialogProps
 
   return (
     <>
-      <Button
-        type="button"
-        className="h-11 w-full gap-2 rounded-xl border border-white/15 bg-[var(--bg-surface)] text-foreground hover:bg-white/[0.08]"
-        onClick={() => setOpen(true)}
-      >
-        <Pencil className="h-4 w-4" />
-        Edit profile
-      </Button>
+      {embedded ? (
+        <ProfileSettingsRow
+          icon={Pencil}
+          label="Edit profile"
+          onClick={() => setOpen(true)}
+        />
+      ) : (
+        <Button
+          type="button"
+          className="h-11 w-full gap-2 rounded-xl border border-white/15 bg-[var(--bg-surface)] text-foreground hover:bg-white/[0.08]"
+          onClick={() => setOpen(true)}
+        >
+          <Pencil className="h-4 w-4" />
+          Edit profile
+        </Button>
+      )}
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
@@ -129,35 +136,89 @@ export function PlayerProfileEditDialog({ player }: PlayerProfileEditDialogProps
                 >
                   <Input {...form.register("fullName")} className={profileFieldClass} />
                 </ProfileFormField>
+                <ProfileFormField
+                  label="Date of birth"
+                  labelExtra={
+                    formatAgeHint(form.watch("dateOfBirth") ?? "") ? (
+                      <span className="text-sm font-medium text-[var(--accent-electric)]">
+                        {formatAgeHint(form.watch("dateOfBirth") ?? "")}
+                      </span>
+                    ) : null
+                  }
+                  error={form.formState.errors.dateOfBirth?.message}
+                >
+                  <DateOfBirthField
+                    value={form.watch("dateOfBirth") ?? ""}
+                    onChange={(v) =>
+                      form.setValue("dateOfBirth", v, { shouldValidate: true })
+                    }
+                    error={!!form.formState.errors.dateOfBirth}
+                    className={profileFieldClass}
+                  />
+                </ProfileFormField>
                 <div className="grid grid-cols-2 gap-3">
-                  <ProfileFormField label="Age">
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      {...form.register("age", { valueAsNumber: true })}
-                      className={profileFieldClass}
-                    />
-                  </ProfileFormField>
                   <ProfileFormField label="Height (cm)">
                     <Input
                       type="number"
                       inputMode="numeric"
-                      {...form.register("heightCm", { valueAsNumber: true })}
+                      {...form.register("heightCm", {
+                        setValueAs: (v) =>
+                          v === "" || v == null ? undefined : Number(v),
+                      })}
                       className={profileFieldClass}
                     />
                   </ProfileFormField>
                 </div>
-                <ProfileFormField label="Location">
-                  <Input {...form.register("location")} className={profileFieldClass} />
+                <ProfileFormField
+                  label="Location"
+                  error={
+                    form.formState.errors.locationSuburb?.message ??
+                    form.formState.errors.postcode?.message
+                  }
+                >
+                  <AustraliaLocationField
+                    suburb={form.watch("locationSuburb") ?? ""}
+                    state={form.watch("locationState") ?? ""}
+                    postcode={form.watch("postcode") ?? ""}
+                    onSelect={(option) => {
+                      form.setValue("locationSuburb", option.suburb, {
+                        shouldValidate: true,
+                      });
+                      form.setValue("locationState", option.state, {
+                        shouldValidate: true,
+                      });
+                      form.setValue("postcode", option.postcode, {
+                        shouldValidate: true,
+                      });
+                    }}
+                    onClear={() => {
+                      form.setValue("locationSuburb", "");
+                      form.setValue("locationState", "");
+                      form.setValue("postcode", "");
+                    }}
+                    className={profileFieldClass}
+                  />
                 </ProfileFormField>
               </ProfileFormSection>
 
               <ProfileFormSection title="Football">
-                <ProfileFormField label="Primary position">
-                  <Input
-                    {...form.register("position")}
-                    placeholder="e.g. Goalkeeper"
+                <ProfileFormField
+                  label="Primary position"
+                  error={form.formState.errors.position?.message}
+                >
+                  <PositionSelect
+                    value={
+                      isFootballPosition(form.watch("position") ?? "")
+                        ? form.watch("position")!
+                        : ""
+                    }
+                    onValueChange={(v) =>
+                      form.setValue("position", v as PlayerOnboardingInput["position"], {
+                        shouldValidate: true,
+                      })
+                    }
                     className={profileFieldClass}
+                    error={!!form.formState.errors.position}
                   />
                 </ProfileFormField>
                 <ProfileFormField
@@ -186,7 +247,7 @@ export function PlayerProfileEditDialog({ player }: PlayerProfileEditDialogProps
                     onValueChange={(v) =>
                       form.setValue("dominantFoot", v as PlayerOnboardingInput["dominantFoot"])
                     }
-                    options={FOOT_OPTIONS}
+                    options={[...DOMINANT_FOOT_OPTIONS]}
                   />
                   <ProfileFormSelect
                     label="Experience"
@@ -197,7 +258,7 @@ export function PlayerProfileEditDialog({ player }: PlayerProfileEditDialogProps
                         v as PlayerOnboardingInput["experienceLevel"]
                       )
                     }
-                    options={EXPERIENCE_OPTIONS}
+                    options={[...EXPERIENCE_LEVEL_OPTIONS]}
                   />
                 </div>
                 <ProfileFormField label="Current club">
@@ -220,7 +281,7 @@ export function PlayerProfileEditDialog({ player }: PlayerProfileEditDialogProps
                   onValueChange={(v) =>
                     form.setValue("availability", v as PlayerOnboardingInput["availability"])
                   }
-                  options={AVAILABILITY_OPTIONS}
+                  options={[...AVAILABILITY_OPTIONS]}
                 />
                 <ProfileFormYesNo
                   label="Willing to travel"

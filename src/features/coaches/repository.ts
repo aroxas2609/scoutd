@@ -32,7 +32,7 @@ function applyCoachFilters(
     query = query.ilike("location", `%${filters.location.trim()}%`);
   }
   if (filters.league?.trim()) {
-    query = query.ilike("league", `%${filters.league.trim()}%`);
+    query = query.eq("league", filters.league.trim());
   }
   return query;
 }

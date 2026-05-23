@@ -5,6 +5,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
+import {
+  ProfileSettingsDivider,
+  ProfileSettingsRow,
+} from "@/components/profile/profile-settings";
 import { toast } from "sonner";
 import {
   coachOnboardingSchema,
@@ -23,6 +27,9 @@ import {
 } from "@/components/ui/sheet";
 import { PremiumButton } from "@/components/ui/premium-button";
 import { Button } from "@/components/ui/button";
+import { AgeGroupsSelect } from "@/components/forms/age-groups-select";
+import { AustraliaLocationField } from "@/components/forms/australia-location-field";
+import { AssociationSelect } from "@/components/forms/association-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -34,9 +41,10 @@ import {
 
 interface CoachProfileEditDialogProps {
   coach: CoachProfile;
+  embedded?: boolean;
 }
 
-export function CoachProfileEditDialog({ coach }: CoachProfileEditDialogProps) {
+export function CoachProfileEditDialog({ coach, embedded }: CoachProfileEditDialogProps) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
@@ -66,18 +74,27 @@ export function CoachProfileEditDialog({ coach }: CoachProfileEditDialogProps) {
     setOpen(false);
   }
 
-  const ageGroupsText = (form.watch("ageGroups") ?? []).join(", ");
-
   return (
     <>
-      <Button
-        type="button"
-        className="h-11 w-full gap-2 rounded-xl border border-white/15 bg-[var(--bg-surface)] text-foreground hover:bg-white/[0.08]"
-        onClick={() => setOpen(true)}
-      >
-        <Pencil className="h-4 w-4" />
-        Edit profile
-      </Button>
+      {embedded ? (
+        <>
+          <ProfileSettingsDivider />
+          <ProfileSettingsRow
+            icon={Pencil}
+            label="Edit profile"
+            onClick={() => setOpen(true)}
+          />
+        </>
+      ) : (
+        <Button
+          type="button"
+          className="h-11 w-full gap-2 rounded-xl border border-white/15 bg-[var(--bg-surface)] text-foreground hover:bg-white/[0.08]"
+          onClick={() => setOpen(true)}
+        >
+          <Pencil className="h-4 w-4" />
+          Edit profile
+        </Button>
+      )}
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
@@ -117,30 +134,63 @@ export function CoachProfileEditDialog({ coach }: CoachProfileEditDialogProps) {
                 >
                   <Input {...form.register("clubName")} className={profileFieldClass} />
                 </ProfileFormField>
-                <ProfileFormField label="League / division">
-                  <Input {...form.register("league")} className={profileFieldClass} />
+                <ProfileFormField
+                  label="Association"
+                  hint="Metro NSW"
+                  error={form.formState.errors.league?.message}
+                >
+                  <AssociationSelect
+                    value={form.watch("league") ?? ""}
+                    onValueChange={(v) =>
+                      form.setValue("league", v || undefined, { shouldValidate: true })
+                    }
+                    className={profileFieldClass}
+                    error={!!form.formState.errors.league}
+                  />
                 </ProfileFormField>
-                <ProfileFormField label="Suburb / area">
-                  <Input
-                    {...form.register("location")}
-                    placeholder="e.g. Moorebank"
+                <ProfileFormField
+                  label="Suburb / area"
+                  error={
+                    form.formState.errors.locationSuburb?.message ??
+                    form.formState.errors.postcode?.message
+                  }
+                >
+                  <AustraliaLocationField
+                    suburb={form.watch("locationSuburb") ?? ""}
+                    state={form.watch("locationState") ?? ""}
+                    postcode={form.watch("postcode") ?? ""}
+                    onSelect={(option) => {
+                      form.setValue("locationSuburb", option.suburb, {
+                        shouldValidate: true,
+                      });
+                      form.setValue("locationState", option.state, {
+                        shouldValidate: true,
+                      });
+                      form.setValue("postcode", option.postcode, {
+                        shouldValidate: true,
+                      });
+                    }}
+                    onClear={() => {
+                      form.setValue("locationSuburb", "");
+                      form.setValue("locationState", "");
+                      form.setValue("postcode", "");
+                    }}
                     className={profileFieldClass}
                   />
                 </ProfileFormField>
-                <ProfileFormField label="Age groups" hint="Separate with commas">
-                  <Input
-                    value={ageGroupsText}
-                    onChange={(e) =>
-                      form.setValue(
-                        "ageGroups",
-                        e.target.value
-                          .split(",")
-                          .map((s) => s.trim())
-                          .filter(Boolean)
-                      )
+                <ProfileFormField
+                  label="Age groups"
+                  error={form.formState.errors.ageGroups?.message}
+                >
+                  <AgeGroupsSelect
+                    value={form.watch("ageGroups") ?? []}
+                    onChange={(codes) =>
+                      form.setValue("ageGroups", codes as CoachOnboardingInput["ageGroups"], {
+                        shouldValidate: true,
+                      })
                     }
-                    placeholder="e.g. U16, U18"
                     className={profileFieldClass}
+                    error={!!form.formState.errors.ageGroups}
                   />
                 </ProfileFormField>
               </ProfileFormSection>

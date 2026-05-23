@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Compass,
   Search,
   Bookmark,
   MessageCircle,
@@ -15,8 +14,7 @@ import { useUnreadMessageCount } from "@/features/messaging/hooks";
 import { useIsCoachViewer } from "@/features/auth/use-viewer-role";
 
 const tabs = [
-  { href: "/discover", label: "Discover", playerLabel: "Clubs", icon: Compass },
-  { href: "/search", label: "Search", playerLabel: "Find", icon: Search },
+  { href: "/search", label: "Search", playerLabel: "Explore", coachLabel: "Discover", icon: Search },
   { href: "/shortlist", label: "Saved", icon: Bookmark, coachOnly: true },
   { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/trials", label: "Trials", icon: Calendar },
@@ -34,8 +32,13 @@ export function BottomTabBar() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[100] border-t border-white/[0.06] bg-[var(--bg-deep)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
       <div className="mx-auto flex max-w-lg items-stretch justify-around px-0.5">
-        {visibleTabs.map(({ href, label, playerLabel, icon: Icon }) => {
-          const tabLabel = isPlayer && playerLabel ? playerLabel : label;
+        {visibleTabs.map(({ href, label, playerLabel, coachLabel, icon: Icon }) => {
+          const tabLabel =
+            isPlayer && playerLabel
+              ? playerLabel
+              : isCoach && coachLabel
+                ? coachLabel
+                : label;
           const active = pathname.startsWith(href);
           const showBadge = href === "/messages" && unreadMessages > 0;
 

@@ -1,8 +1,10 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { computeCompletionScore } from "@/features/players/repository";
+import { buildCoachLocationFields } from "@/features/profile/coach-payload";
+import { buildPlayerProfileRow } from "@/features/profile/player-payload";
 import type { CoachOnboardingInput, PlayerOnboardingInput } from "./schemas";
 
 export async function completePlayerOnboarding(data: PlayerOnboardingInput) {
@@ -12,35 +14,39 @@ export async function completePlayerOnboarding(data: PlayerOnboardingInput) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "player") {
+    return { error: "Complete player setup from the player onboarding path." };
+  }
+
   const playerProfile = {
-    user_id: user.id,
-    age: data.age,
-    location: data.location,
-    location_public: data.location,
-    position: data.position,
-    secondary_positions: data.secondaryPositions ?? [],
-    dominant_foot: data.dominantFoot,
-    height_cm: data.heightCm,
-    current_club: data.currentClub,
-    experience_level: data.experienceLevel,
-    bio: data.bio,
-    availability: data.availability,
-    playing_level: data.playingLevel,
-    willing_to_travel: data.willingToTravel,
-    gender: data.gender,
+    ...buildPlayerProfileRow(data, user.id),
     completion_score: 0,
   };
 
   playerProfile.completion_score = computeCompletionScore(playerProfile);
 
-  await supabase.from("profiles").update({
-    full_name: data.fullName,
-    onboarding_complete: true,
-  }).eq("id", user.id);
+  const { error: playerError } = await supabase.from("player_profiles").upsert(playerProfile);
+  if (playerError) return { error: playerError.message };
 
-  const { error } = await supabase.from("player_profiles").upsert(playerProfile);
-  if (error) return { error: error.message };
-  redirect("/discover");
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .update({
+      full_name: data.fullName.trim(),
+      onboarding_complete: true,
+    })
+    .eq("id", user.id);
+
+  if (profileError) return { error: profileError.message };
+
+  revalidatePath("/profile");
+  revalidatePath("/search");
+  return { success: true as const };
 }
 
 export async function completeCoachOnboarding(data: CoachOnboardingInput) {
@@ -50,25 +56,46 @@ export async function completeCoachOnboarding(data: CoachOnboardingInput) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  const { error } = await supabase.from("coach_profiles").upsert({
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "coach") {
+    return { error: "Complete club setup from the coach onboarding path." };
+  }
+
+  const { location, postcode } = buildCoachLocationFields(data);
+
+  const { error: coachError } = await supabase.from("coach_profiles").upsert({
     user_id: user.id,
-    club_name: data.clubName,
-    league: data.league,
-    location: data.location,
+    club_name: data.clubName.trim(),
+    league: data.league?.trim() || null,
+    location,
+    postcode,
     address: data.address?.trim() || null,
     contact_email: data.contactEmail?.trim() || null,
     contact_phone: data.contactPhone?.trim() || null,
     contact_phone_alt: data.contactPhoneAlt?.trim() || null,
     age_groups: data.ageGroups,
-    recruiting_needs: data.recruitingNeeds,
-    about: data.about,
+    recruiting_needs: data.recruitingNeeds.trim(),
+    about: data.about?.trim() || null,
   });
 
-  if (error) return { error: error.message };
+  if (coachError) return { error: coachError.message };
 
-  await supabase
+  const { error: profileError } = await supabase
     .from("profiles")
-    .update({ full_name: data.coachName, onboarding_complete: true })
+    .update({
+      full_name: data.coachName.trim(),
+      onboarding_complete: true,
+    })
     .eq("id", user.id);
-  redirect("/discover");
+
+  if (profileError) return { error: profileError.message };
+
+  revalidatePath("/profile");
+  revalidatePath("/search");
+  return { success: true as const };
 }

@@ -43,13 +43,13 @@ export default function ShortlistPage() {
             <EmptyStateCinematic
               icon={<Bookmark className="h-8 w-8 text-[var(--accent-electric)]" />}
               title="No saved players"
-              description="Heart players in Discover swipe mode to add them here."
+              description="Heart players in swipe mode to add them here."
               action={
                 <Link
-                  href="/discover"
+                  href="/search"
                   className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
                 >
-                  Go to Discover
+                  Discover players
                 </Link>
               }
             />

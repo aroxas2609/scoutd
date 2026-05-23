@@ -1,10 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Camera, Film, Loader2, Plus, Trash2 } from "lucide-react";
+import { Film, Loader2, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,9 +18,7 @@ import {
 } from "@/lib/player-media";
 import type { PlayerProfile } from "@/types/database";
 
-const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
-const MAX_IMAGE_MB = 5;
 const MAX_VIDEO_MB = 40;
 
 type Props = {
@@ -32,9 +29,7 @@ type Props = {
 export function PlayerMediaSection({ player, isOwn }: Props) {
   const router = useRouter();
   const qc = useQueryClient();
-  const coverInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
-  const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [savingLink, setSavingLink] = useState(false);
   const [linkDraft, setLinkDraft] = useState("");
@@ -97,35 +92,6 @@ export function PlayerMediaSection({ player, isOwn }: Props) {
     return supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
   }
 
-  async function handleCoverFile(file: File) {
-    if (!IMAGE_TYPES.includes(file.type)) {
-      toast.error("Cover must be JPG, PNG, or WebP");
-      return;
-    }
-    if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
-      toast.error(`Cover must be under ${MAX_IMAGE_MB}MB`);
-      return;
-    }
-
-    setUploadingCover(true);
-    const supabase = createClient();
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const path = `${player.user_id}/cover.${ext}`;
-    const url = await uploadToStorage(path, file);
-    if (url) {
-      const { error } = await supabase
-        .from("player_profiles")
-        .update({ cover_url: url })
-        .eq("user_id", player.user_id);
-      if (error) toast.error(error.message);
-      else {
-        toast.success("Cover photo added");
-        await refreshPlayer();
-      }
-    }
-    setUploadingCover(false);
-  }
-
   async function handleVideoFile(file: File) {
     if (atHighlightLimit) {
       toast.error(`Maximum ${MAX_HIGHLIGHTS} highlights`);
@@ -177,19 +143,6 @@ export function PlayerMediaSection({ player, isOwn }: Props) {
     setSavingLink(false);
   }
 
-  async function removeCover() {
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("player_profiles")
-      .update({ cover_url: null })
-      .eq("user_id", player.user_id);
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Cover removed");
-      await refreshPlayer();
-    }
-  }
-
   async function removeHighlightAt(index: number) {
     const next = highlightUrls.filter((_, i) => i !== index);
     const ok = await saveHighlights(next);
@@ -206,63 +159,6 @@ export function PlayerMediaSection({ player, isOwn }: Props) {
 
   return (
     <div className="space-y-6">
-      {isOwn ? (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Cover photo
-            </h3>
-            {player.cover_url ? (
-              <button
-                type="button"
-                onClick={() => void removeCover()}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Remove
-              </button>
-            ) : null}
-          </div>
-          {player.cover_url ? (
-            <div className="relative aspect-[2.2/1] overflow-hidden rounded-2xl border border-white/[0.08] bg-[var(--bg-elevated)]">
-              <Image
-                src={player.cover_url}
-                alt="Profile cover"
-                fill
-                className="object-cover"
-                sizes="(max-width: 512px) 100vw"
-              />
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No cover photo yet.</p>
-          )}
-          <input
-            ref={coverInputRef}
-            type="file"
-            accept={IMAGE_TYPES.join(",")}
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void handleCoverFile(file);
-              e.target.value = "";
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 w-full gap-2 rounded-xl border-white/15 bg-[var(--bg-surface)]"
-            disabled={uploadingCover}
-            onClick={() => coverInputRef.current?.click()}
-          >
-            {uploadingCover ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Camera className="h-4 w-4" />
-            )}
-            {player.cover_url ? "Change cover photo" : "Add cover photo"}
-          </Button>
-        </section>
-      ) : null}
-
       {(highlightUrls.length > 0 || isOwn) && (
         <section className="space-y-3">
           <div className="flex items-center justify-between">

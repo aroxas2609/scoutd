@@ -1,13 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Bookmark,
   Building2,
-  ChevronRight,
   Mail,
   MapPin,
   Phone,
@@ -16,10 +14,19 @@ import { VerificationBadge } from "@/components/ui/verification-badge";
 import { ReportBlockMenu } from "@/components/moderation/report-block-menu";
 import { ProfilePhotoUpload } from "@/components/profile/profile-photo-upload";
 import { CoachProfileEditDialog } from "@/components/profile/coach-profile-edit-dialog";
+import { ChangePasswordSection } from "@/components/auth/change-password-section";
+import { DeleteAccountSection } from "@/components/auth/delete-account-section";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { MessagePlayerButton } from "@/components/messaging/message-player-button";
 import { coachProfileHeading } from "@/features/profile/coach-display";
 import { ProfileDetailRow, ProfileSection } from "@/components/profile/profile-detail-row";
+import { ProfileDetailLinkRow } from "@/components/profile/profile-detail-link-row";
+import {
+  ProfileAccountSection,
+  ProfileSettingsCard,
+  ProfileSettingsRow,
+} from "@/components/profile/profile-settings";
+import { CoachAgeGroupsCard } from "@/components/profile/coach-age-groups-card";
 import type { CoachProfile } from "@/types/database";
 
 type Props = {
@@ -112,46 +119,28 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
             <ProfileSection title="Contact">
               <ProfileDetailRow icon={MapPin} label="Address" value={coach.address} />
               {coach.contact_email ? (
-                <div className="flex items-start justify-between gap-4 border-b border-white/[0.06] py-3 last:border-0">
-                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Mail className="h-4 w-4 shrink-0 opacity-70" />
-                    Email
-                  </span>
-                  <Link
-                    href={`mailto:${coach.contact_email}`}
-                    className="max-w-[58%] truncate text-right text-sm font-medium text-[var(--accent-brand)]"
-                  >
-                    {coach.contact_email}
-                  </Link>
-                </div>
+                <ProfileDetailLinkRow
+                  icon={Mail}
+                  label="Email"
+                  href={`mailto:${coach.contact_email}`}
+                  value={coach.contact_email}
+                />
               ) : null}
               {coach.contact_phone ? (
-                <div className="flex items-start justify-between gap-4 border-b border-white/[0.06] py-3 last:border-0">
-                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Phone className="h-4 w-4 shrink-0 opacity-70" />
-                    Phone
-                  </span>
-                  <Link
-                    href={telHref(coach.contact_phone)}
-                    className="text-right text-sm font-medium text-[var(--accent-brand)]"
-                  >
-                    {coach.contact_phone}
-                  </Link>
-                </div>
+                <ProfileDetailLinkRow
+                  icon={Phone}
+                  label="Phone"
+                  href={telHref(coach.contact_phone)}
+                  value={coach.contact_phone}
+                />
               ) : null}
               {coach.contact_phone_alt ? (
-                <div className="flex items-start justify-between gap-4 border-b border-white/[0.06] py-3 last:border-0">
-                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Phone className="h-4 w-4 shrink-0 opacity-70" />
-                    Alt. phone
-                  </span>
-                  <Link
-                    href={telHref(coach.contact_phone_alt)}
-                    className="text-right text-sm font-medium text-[var(--accent-brand)]"
-                  >
-                    {coach.contact_phone_alt}
-                  </Link>
-                </div>
+                <ProfileDetailLinkRow
+                  icon={Phone}
+                  label="Alt. phone"
+                  href={telHref(coach.contact_phone_alt)}
+                  value={coach.contact_phone_alt}
+                />
               ) : null}
             </ProfileSection>
           </div>
@@ -176,16 +165,7 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
         ) : null}
 
         {coach.age_groups?.length > 0 ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {coach.age_groups.map((g) => (
-              <span
-                key={g}
-                className="rounded-lg border border-white/[0.08] bg-[var(--bg-surface)] px-2.5 py-1 text-xs text-muted-foreground"
-              >
-                {g}
-              </span>
-            ))}
-          </div>
+          <CoachAgeGroupsCard codes={coach.age_groups} />
         ) : null}
 
         {!isOwn && isPlayerViewer ? (
@@ -195,22 +175,19 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
         ) : null}
 
         {isOwn ? (
-          <div className="mt-8 space-y-3 border-t border-white/[0.06] pt-6">
-            <Link
-              href="/shortlist"
-              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-[var(--bg-surface)] px-4 py-3.5 text-sm font-medium transition-colors hover:bg-white/[0.04]"
-            >
-              <span className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04]">
-                  <Bookmark className="h-4 w-4 text-[var(--accent-brand)]" />
-                </span>
-                Saved players
-              </span>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </Link>
-            <CoachProfileEditDialog coach={coach} />
+          <ProfileAccountSection>
+            <ProfileSettingsCard>
+              <ProfileSettingsRow
+                icon={Bookmark}
+                label="Saved players"
+                href="/shortlist"
+              />
+              <CoachProfileEditDialog coach={coach} embedded />
+              <ChangePasswordSection embedded />
+            </ProfileSettingsCard>
             <SignOutButton />
-          </div>
+            <DeleteAccountSection />
+          </ProfileAccountSection>
         ) : null}
       </div>
     </div>

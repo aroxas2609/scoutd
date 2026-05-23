@@ -43,6 +43,8 @@ export interface PlayerProfile {
   user_id: string;
   cover_url: string | null;
   age: number | null;
+  date_of_birth: string | null;
+  postcode: string | null;
   location: string | null;
   location_public: string | null;
   latitude: number | null;
@@ -75,6 +77,7 @@ export interface CoachProfile {
   league: string | null;
   age_groups: string[];
   location: string | null;
+  postcode: string | null;
   address: string | null;
   contact_email: string | null;
   contact_phone: string | null;

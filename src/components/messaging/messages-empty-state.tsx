@@ -47,9 +47,9 @@ export function MessagesEmptyState() {
             </PremiumButton>
           </Link>
         ) : (
-          <Link href="/discover">
+          <Link href="/search">
             <PremiumButton variant="outline" className="border-white/20">
-              Find clubs
+              Explore clubs
             </PremiumButton>
           </Link>
         )

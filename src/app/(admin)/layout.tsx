@@ -25,7 +25,7 @@ export default async function AdminLayout({
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") redirect("/discover");
+  if (profile?.role !== "admin") redirect("/search");
 
   return (
     <div className="min-h-dvh bg-[var(--bg-deep)]">

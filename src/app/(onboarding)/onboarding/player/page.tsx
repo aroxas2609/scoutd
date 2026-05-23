@@ -1,31 +1,45 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { playerOnboardingSchema, type PlayerOnboardingInput } from "@/features/onboarding/schemas";
+import {
+  playerOnboardingSchema,
+  type PlayerOnboardingInput,
+} from "@/features/onboarding/schemas";
+import { PLAYER_ONBOARDING_STEP_FIELDS } from "@/features/onboarding/step-fields";
+import { goBackToRoleSelection } from "@/features/auth/role-actions";
 import { completePlayerOnboarding } from "@/features/onboarding/actions";
+import { OnboardingField } from "@/components/onboarding/onboarding-field";
+import { AustraliaLocationField } from "@/components/forms/australia-location-field";
+import { PositionSelect } from "@/components/forms/position-select";
+import { SheetSelect } from "@/components/forms/sheet-select";
+import {
+  DOMINANT_FOOT_OPTIONS,
+  EXPERIENCE_LEVEL_OPTIONS,
+} from "@/lib/form-options";
+import {
+  DateOfBirthField,
+  formatAgeHint,
+} from "@/components/forms/date-of-birth-field";
 import { GlassCard } from "@/components/ui/glass-card";
 import { PremiumButton } from "@/components/ui/premium-button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ProfileFormYesNo } from "@/components/profile/profile-form-primitives";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 const STEPS = ["Basics", "Position", "Club", "Bio", "Availability"];
 
 export default function PlayerOnboardingPage() {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
   const form = useForm<PlayerOnboardingInput>({
     resolver: zodResolver(playerOnboardingSchema),
     defaultValues: {
@@ -33,22 +47,60 @@ export default function PlayerOnboardingPage() {
       availability: "available",
       secondaryPositions: [],
     },
+    mode: "onTouched",
   });
 
+  const { errors } = form.formState;
   const progress = ((step + 1) / STEPS.length) * 100;
+  const dateOfBirth = form.watch("dateOfBirth");
+  const ageHint = formatAgeHint(dateOfBirth ?? "");
+
+  async function goToNextStep() {
+    setError(null);
+    const fields = PLAYER_ONBOARDING_STEP_FIELDS[step];
+    if (fields?.length) {
+      const ok = await form.trigger(fields);
+      if (!ok) return;
+    }
+    setStep((s) => s + 1);
+  }
 
   async function onSubmit(data: PlayerOnboardingInput) {
-    const result = await completePlayerOnboarding(data);
-    if (result?.error) setError(result.error);
+    setError(null);
+    setSubmitting(true);
+    try {
+      const result = await completePlayerOnboarding(data);
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+      router.push("/profile");
+      router.refresh();
+    } catch {
+      setError("Could not save your profile. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
     <div>
-      <p className="text-xs uppercase tracking-widest text-[var(--accent-electric)]">Player onboarding</p>
+      <p className="text-xs uppercase tracking-widest text-[var(--accent-electric)]">
+        Player onboarding
+      </p>
       <h1 className="font-display mt-2 text-2xl font-bold">{STEPS[step]}</h1>
       <Progress value={progress} className="mt-4 h-1" />
       <GlassCard className="mt-8 p-6">
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && step < STEPS.length - 1) {
+              e.preventDefault();
+            }
+          }}
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -59,68 +111,157 @@ export default function PlayerOnboardingPage() {
             >
               {step === 0 && (
                 <>
-                  <div>
-                    <Label>Full name</Label>
-                    <Input {...form.register("fullName")} className="mt-1 bg-white/5" />
-                  </div>
-                  <div>
-                    <Label>Age</Label>
-                    <Input type="number" {...form.register("age", { valueAsNumber: true })} className="mt-1 bg-white/5" />
-                  </div>
-                  <div>
-                    <Label>Location</Label>
-                    <Input {...form.register("location")} className="mt-1 bg-white/5" />
-                  </div>
+                  <OnboardingField label="Full name" error={errors.fullName?.message}>
+                    <Input
+                      {...form.register("fullName")}
+                      className={cn("mt-0 bg-white/5", errors.fullName && "border-red-400/50")}
+                      autoComplete="name"
+                    />
+                  </OnboardingField>
+                  <OnboardingField
+                    label="Date of birth"
+                    labelExtra={
+                      ageHint ? (
+                        <span className="text-sm font-medium text-[var(--accent-electric)]">
+                          {ageHint}
+                        </span>
+                      ) : null
+                    }
+                    error={errors.dateOfBirth?.message}
+                  >
+                    <DateOfBirthField
+                      value={dateOfBirth ?? ""}
+                      onChange={(v) =>
+                        form.setValue("dateOfBirth", v, { shouldValidate: true })
+                      }
+                      error={!!errors.dateOfBirth}
+                    />
+                  </OnboardingField>
+                  <OnboardingField
+                    label="Location"
+                    error={
+                      errors.locationSuburb?.message ??
+                      errors.postcode?.message ??
+                      errors.locationState?.message
+                    }
+                  >
+                    <AustraliaLocationField
+                      suburb={form.watch("locationSuburb") ?? ""}
+                      state={form.watch("locationState") ?? ""}
+                      postcode={form.watch("postcode") ?? ""}
+                      onSelect={(option) => {
+                        form.setValue("locationSuburb", option.suburb, {
+                          shouldValidate: true,
+                        });
+                        form.setValue("locationState", option.state, {
+                          shouldValidate: true,
+                        });
+                        form.setValue("postcode", option.postcode, {
+                          shouldValidate: true,
+                        });
+                      }}
+                      onClear={() => {
+                        form.setValue("locationSuburb", "");
+                        form.setValue("locationState", "");
+                        form.setValue("postcode", "");
+                      }}
+                      error={
+                        !!(
+                          errors.locationSuburb ||
+                          errors.postcode ||
+                          errors.locationState
+                        )
+                      }
+                    />
+                  </OnboardingField>
                 </>
               )}
               {step === 1 && (
                 <>
-                  <div>
-                    <Label>Primary position</Label>
-                    <Input {...form.register("position")} placeholder="e.g. ST" className="mt-1 bg-white/5" />
-                  </div>
-                  <div>
-                    <Label>Dominant foot</Label>
-                    <Select onValueChange={(v) => form.setValue("dominantFoot", v as "left" | "right" | "both")}>
-                      <SelectTrigger className="mt-1 bg-white/5"><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="left">Left</SelectItem>
-                        <SelectItem value="right">Right</SelectItem>
-                        <SelectItem value="both">Both</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Height (cm)</Label>
-                    <Input type="number" {...form.register("heightCm", { valueAsNumber: true })} className="mt-1 bg-white/5" />
-                  </div>
+                  <OnboardingField label="Primary position" error={errors.position?.message}>
+                    <PositionSelect
+                      value={form.watch("position") ?? ""}
+                      onValueChange={(v) =>
+                        form.setValue("position", v as PlayerOnboardingInput["position"], {
+                          shouldValidate: true,
+                        })
+                      }
+                      error={!!errors.position}
+                    />
+                  </OnboardingField>
+                  <OnboardingField label="Dominant foot" error={errors.dominantFoot?.message}>
+                    <SheetSelect
+                      value={form.watch("dominantFoot") ?? ""}
+                      onValueChange={(v) =>
+                        form.setValue("dominantFoot", v as PlayerOnboardingInput["dominantFoot"], {
+                          shouldValidate: true,
+                        })
+                      }
+                      options={[...DOMINANT_FOOT_OPTIONS]}
+                      placeholder="Select foot"
+                      sheetTitle="Dominant foot"
+                      error={!!errors.dominantFoot}
+                    />
+                  </OnboardingField>
+                  <OnboardingField
+                    label="Height (cm)"
+                    hint="Optional"
+                    error={errors.heightCm?.message}
+                  >
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      {...form.register("heightCm", {
+                        setValueAs: (v) =>
+                          v === "" || v == null ? undefined : Number(v),
+                      })}
+                      className={cn("mt-0 bg-white/5", errors.heightCm && "border-red-400/50")}
+                    />
+                  </OnboardingField>
                 </>
               )}
               {step === 2 && (
                 <>
-                  <div>
-                    <Label>Current club</Label>
-                    <Input {...form.register("currentClub")} className="mt-1 bg-white/5" />
-                  </div>
-                  <div>
-                    <Label>Experience level</Label>
-                    <Select onValueChange={(v) => form.setValue("experienceLevel", v as PlayerOnboardingInput["experienceLevel"])}>
-                      <SelectTrigger className="mt-1 bg-white/5"><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="academy">Academy</SelectItem>
-                        <SelectItem value="amateur">Amateur</SelectItem>
-                        <SelectItem value="semi_pro">Semi-Pro</SelectItem>
-                        <SelectItem value="professional">Professional</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <OnboardingField
+                    label="Current club"
+                    hint="Optional"
+                    error={errors.currentClub?.message}
+                  >
+                    <Input {...form.register("currentClub")} className="mt-0 bg-white/5" />
+                  </OnboardingField>
+                  <OnboardingField
+                    label="Experience level"
+                    error={errors.experienceLevel?.message}
+                  >
+                    <SheetSelect
+                      value={form.watch("experienceLevel") ?? ""}
+                      onValueChange={(v) =>
+                        form.setValue(
+                          "experienceLevel",
+                          v as PlayerOnboardingInput["experienceLevel"],
+                          { shouldValidate: true }
+                        )
+                      }
+                      options={[...EXPERIENCE_LEVEL_OPTIONS]}
+                      placeholder="Select level"
+                      sheetTitle="Experience level"
+                      error={!!errors.experienceLevel}
+                    />
+                  </OnboardingField>
                 </>
               )}
               {step === 3 && (
-                <div>
-                  <Label>Bio</Label>
-                  <Textarea {...form.register("bio")} className="mt-1 bg-white/5" rows={4} />
-                </div>
+                <OnboardingField
+                  label="Bio"
+                  hint="Optional — tell coaches about your game"
+                  error={errors.bio?.message}
+                >
+                  <Textarea
+                    {...form.register("bio")}
+                    className={cn("mt-0 bg-white/5", errors.bio && "border-red-400/50")}
+                    rows={4}
+                  />
+                </OnboardingField>
               )}
               {step === 4 && (
                 <>
@@ -135,17 +276,46 @@ export default function PlayerOnboardingPage() {
             </motion.div>
           </AnimatePresence>
           <div className="mt-8 flex gap-3">
-            {step > 0 && (
-              <PremiumButton type="button" variant="outline" className="flex-1 border-white/20" onClick={() => setStep((s) => s - 1)}>
+            {step > 0 ? (
+              <PremiumButton
+                type="button"
+                variant="outline"
+                className="flex-1 border-white/20"
+                disabled={submitting}
+                onClick={() => {
+                  setError(null);
+                  setStep((s) => s - 1);
+                }}
+              >
                 Back
+              </PremiumButton>
+            ) : (
+              <PremiumButton
+                type="button"
+                variant="outline"
+                className="flex-1 border-white/20"
+                disabled={submitting}
+                onClick={() => {
+                  setError(null);
+                  void goBackToRoleSelection();
+                }}
+              >
+                Change role
               </PremiumButton>
             )}
             {step < STEPS.length - 1 ? (
-              <PremiumButton type="button" className="flex-1" onClick={() => setStep((s) => s + 1)}>
+              <PremiumButton type="button" className="flex-1" onClick={() => void goToNextStep()}>
                 Continue
               </PremiumButton>
             ) : (
-              <PremiumButton type="submit" className="flex-1">Complete profile</PremiumButton>
+              <PremiumButton
+                type="button"
+                className="flex-1"
+                disabled={submitting}
+                onClick={() => void form.handleSubmit(onSubmit)()}
+              >
+                {submitting ? "Launching…" : "Launch profile"}
+              </PremiumButton>
             )}
           </div>
         </form>
