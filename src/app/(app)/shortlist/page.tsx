@@ -37,7 +37,7 @@ export default function ShortlistPage() {
   return (
     <div>
       <AppHeader title="Shortlist" subtitle="Saved players" />
-      <div className="grid gap-4 px-4 pb-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-4 px-4 pb-10 pt-1 sm:grid-cols-2 lg:gap-4 lg:px-4 lg:pb-8 lg:pt-0 lg:grid-cols-3 xl:grid-cols-4">
         {players.length === 0 ? (
           <div className="col-span-full">
             <EmptyStateCinematic

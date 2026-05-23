@@ -32,7 +32,7 @@ export function PlayersNearClubWidget({
 
   if (coach.isLoading || nearby.isLoading) {
     return (
-      <section className={cn("mb-8", isGrid && "lg:mb-0")}>
+      <section className={cn("mb-10", isGrid && "mb-8 lg:mb-0")}>
         <Skeleton className="h-4 w-32" />
         <div
           className={cn(
@@ -62,14 +62,14 @@ export function PlayersNearClubWidget({
   if (players.length === 0) return null;
 
   return (
-    <section className={cn("mb-8", isGrid && "mb-0")}>
+    <section className={cn("mb-10", isGrid && "mb-0")}>
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/90 lg:text-xs lg:font-medium lg:tracking-wider lg:text-muted-foreground">
             Near your club
           </h2>
           {origin ? (
-            <p className="mt-1 truncate text-sm text-foreground/80">
+            <p className="mt-1 truncate text-[13px] text-white/55 lg:text-sm lg:text-foreground/80">
               Within {DEFAULT_RADIUS_KM} km · {origin}
             </p>
           ) : null}
@@ -87,9 +87,9 @@ export function PlayersNearClubWidget({
       </div>
       <div
         className={cn(
-          "-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 hide-scrollbar",
+          "-mx-4 mt-3.5 flex gap-3.5 overflow-x-auto px-4 hide-scrollbar lg:mx-0 lg:mt-3 lg:gap-3",
           isGrid &&
-            "mx-0 grid grid-cols-1 gap-4 overflow-visible px-0 sm:grid-cols-2 xl:grid-cols-3"
+            "mx-0 mt-3 grid grid-cols-1 gap-4 overflow-visible px-0 sm:grid-cols-2 xl:grid-cols-3"
         )}
       >
         {players.map((p) => (

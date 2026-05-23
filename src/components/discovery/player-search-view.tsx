@@ -214,7 +214,7 @@ export function PlayerSearchView() {
             : "sticky top-[65px] z-30 border-b border-white/[0.06] bg-[var(--bg-deep)]/95 backdrop-blur-md lg:top-[4.5rem]"
         }
       >
-        <div className="space-y-2.5 px-4 pt-3 pb-2">
+        <div className="space-y-3 px-4 pt-3.5 pb-2.5 lg:space-y-2.5 lg:pt-3 lg:pb-2">
           <div className="flex gap-2">
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -298,7 +298,7 @@ export function PlayerSearchView() {
             <SwipeDeck players={swipePlayers} />
           </div>
         ) : (
-          <div className="px-4 pb-8 pt-4 lg:px-0">
+          <div className="px-4 pb-10 pt-5 lg:px-0 lg:pb-8 lg:pt-4">
             {isCoach ? (
               <div className="lg:hidden">
                 <PlayersNearClubWidget onSearchNearby={enableNearby} />
@@ -314,9 +314,9 @@ export function PlayerSearchView() {
         )
       ) : (
         <>
-          <div className="px-4 pb-8 pt-4">
+          <div className="px-4 pb-10 pt-5 lg:px-4 lg:pb-8 lg:pt-4">
             {showInitialSkeleton ? (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:gap-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} className="aspect-[4/5] rounded-2xl" />
                 ))}
@@ -340,7 +340,7 @@ export function PlayerSearchView() {
                 description="Try a different search or adjust filters."
               />
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:gap-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {players.map((p) => (
                   <PlayerCard
                     key={p.user_id}

@@ -48,13 +48,13 @@ export function PlayerDiscoverSections({ hideNearbySection = false }: PlayerDisc
   }
 
   return (
-    <div className="space-y-8 lg:space-y-10">
+    <div className="space-y-10 lg:space-y-10">
       {featuredList.length > 0 ? (
-        <section>
-          <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <section className="rounded-2xl border border-white/[0.05] bg-gradient-to-b from-white/[0.03] to-transparent p-4 pb-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] lg:rounded-none lg:border-0 lg:bg-none lg:p-0 lg:pb-0 lg:shadow-none">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--accent-brand)]/85 lg:text-xs lg:font-medium lg:tracking-wider lg:text-muted-foreground">
             Featured
           </h2>
-          <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 hide-scrollbar lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:px-0 xl:grid-cols-4">
+          <div className="-mx-4 mt-3.5 flex gap-3.5 overflow-x-auto px-4 hide-scrollbar lg:mx-0 lg:mt-3 lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:px-0 xl:grid-cols-4">
             {featuredList.map((p) => (
               <PlayerCard key={p.user_id} player={p} compact />
             ))}
@@ -63,10 +63,10 @@ export function PlayerDiscoverSections({ hideNearbySection = false }: PlayerDisc
       ) : null}
       {trendingList.length > 0 ? (
         <section>
-          <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/90 lg:text-xs lg:font-medium lg:tracking-wider lg:text-muted-foreground">
             Trending
           </h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-3.5 grid gap-4 sm:grid-cols-2 lg:mt-3 lg:gap-3 lg:grid-cols-2 xl:grid-cols-3">
             {trendingList.slice(0, 4).map((p) => (
               <PlayerCard key={p.user_id} player={p} />
             ))}
@@ -75,10 +75,10 @@ export function PlayerDiscoverSections({ hideNearbySection = false }: PlayerDisc
       ) : null}
       {showNearby ? (
         <section>
-          <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/90 lg:text-xs lg:font-medium lg:tracking-wider lg:text-muted-foreground">
             Nearby
           </h2>
-          <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 hide-scrollbar lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:px-0 xl:grid-cols-4">
+          <div className="-mx-4 mt-3.5 flex gap-3.5 overflow-x-auto px-4 hide-scrollbar lg:mx-0 lg:mt-3 lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:px-0 xl:grid-cols-4">
             {nearbyList.map((p) => (
               <PlayerCard key={p.user_id} player={p} distanceKm={p.distanceKm} compact />
             ))}
@@ -87,10 +87,10 @@ export function PlayerDiscoverSections({ hideNearbySection = false }: PlayerDisc
       ) : null}
       {activeList.length > 0 ? (
         <section>
-          <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/90 lg:text-xs lg:font-medium lg:tracking-wider lg:text-muted-foreground">
             Recently active
           </h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-3.5 grid gap-4 sm:grid-cols-2 lg:mt-3 lg:gap-3 lg:grid-cols-2 xl:grid-cols-3">
             {activeList.slice(0, 4).map((p) => (
               <PlayerCard key={p.user_id} player={p} />
             ))}
