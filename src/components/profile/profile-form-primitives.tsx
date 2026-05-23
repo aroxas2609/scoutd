@@ -76,7 +76,10 @@ export function ProfileFormSelect({
 }) {
   return (
     <ProfileFormField label={label}>
-      <Select value={value} onValueChange={onValueChange}>
+      <Select
+        value={value}
+        onValueChange={(v) => onValueChange(v ?? options[0]?.value ?? "")}
+      >
         <SelectTrigger className={cn(profileFieldClass, "w-full")}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>

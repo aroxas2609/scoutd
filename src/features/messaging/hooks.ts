@@ -5,7 +5,10 @@ import { useEffect } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import type { Message } from "@/types/database";
-import { fetchParticipantsByUserIds } from "./participant-display";
+import {
+  fetchParticipantsByUserIds,
+  type MessageParticipant,
+} from "./participant-display";
 import {
   countUnreadMessages,
   type ConversationPreview,
@@ -73,11 +76,17 @@ async function fetchConversationPreviews(
   }
 
   const previews: ConversationPreview[] = participants.map((p) => {
-    const row = p as {
+    const row = p as unknown as {
       conversation_id: string;
       last_read_at: string | null;
-      conversations: ConversationPreview["conversation"] | null;
+      conversations:
+        | ConversationPreview["conversation"]
+        | ConversationPreview["conversation"][]
+        | null;
     };
+    const conversation = Array.isArray(row.conversations)
+      ? row.conversations[0]
+      : row.conversations;
     const msgs = messagesByConv.get(row.conversation_id) ?? [];
     const lastMessage = msgs[0] ?? null;
     const unread_count = countUnreadMessages(msgs, row.last_read_at, userId);
@@ -85,7 +94,7 @@ async function fetchConversationPreviews(
     return {
       conversation_id: row.conversation_id,
       last_read_at: row.last_read_at,
-      conversation: row.conversations!,
+      conversation: conversation!,
       other_user: otherByConv.get(row.conversation_id) ?? {
         id: "",
         full_name: null,
@@ -205,7 +214,7 @@ async function resolveOtherParticipantId(
 
 export function useConversationPeer(conversationId: string) {
   const supabase = createClient();
-  return useQuery({
+  return useQuery<MessageParticipant | null>({
     queryKey: ["conversation-peer", conversationId],
     queryFn: async () => {
       const {

@@ -69,7 +69,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           <ArrowLeft className="h-4 w-4" />
         </Link>
 
-        {peerLoading && !peer?.id ? (
+        {peerLoading && !peer ? (
           <div className="min-w-0 flex-1">
             <h1 className="text-base font-semibold">Chat</h1>
             <p className="text-xs text-muted-foreground">Loading…</p>

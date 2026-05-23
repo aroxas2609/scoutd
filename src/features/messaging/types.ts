@@ -7,7 +7,7 @@ export type ConversationPreview = {
   last_read_at: string | null;
   conversation: Conversation;
   other_user: MessageParticipant;
-  last_message: Pick<Message, "body" | "sender_id" | "created_at" | "type"> | null;
+  last_message: Pick<Message, "body" | "sender_id" | "created_at" | "type" | "metadata"> | null;
   unread_count: number;
 };
 
