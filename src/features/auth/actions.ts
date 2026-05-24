@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { resolveAppUrl } from "@/lib/auth/resolve-app-url";
+import {
+  passwordResetRedirectUrl,
+  resolveAppUrl,
+} from "@/lib/auth/resolve-app-url";
 import { getPostLoginRedirect } from "@/lib/auth/redirect-path";
 import type { UserRole } from "@/types/database";
 
@@ -152,7 +155,7 @@ export async function requestPasswordReset(formData: FormData) {
 
   const supabase = await createClient();
   const appUrl = await resolveAppUrl();
-  const redirectTo = `${appUrl}/auth/callback?next=${encodeURIComponent("/update-password")}`;
+  const redirectTo = passwordResetRedirectUrl(appUrl);
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
   if (error) return { error: error.message };

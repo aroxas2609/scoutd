@@ -34,6 +34,24 @@ function urlFromVercel(): string | null {
   return null;
 }
 
+/** Server-only production URL (set in Vercel; not inlined into the client bundle). */
+function urlFromServerEnv(): string | null {
+  const app = process.env.APP_URL?.trim();
+  if (!app) return null;
+  try {
+    if (!isLocalHost(new URL(app).host)) {
+      return normalizeUrl(app);
+    }
+  } catch {
+    // invalid URL
+  }
+  return null;
+}
+
+function isVercelRuntime() {
+  return Boolean(process.env.VERCEL);
+}
+
 /** Build origin from request host headers (non-local only). */
 export function appUrlFromHost(host: string, proto?: string | null): string | null {
   if (!host || isLocalHost(host)) return null;
@@ -47,5 +65,26 @@ export function appUrlFromHost(host: string, proto?: string | null): string | nu
  * On Vercel, prefers deployment URL over NEXT_PUBLIC_APP_URL when env still points at localhost.
  */
 export function getAppUrl() {
-  return urlFromEnvIfPublic() ?? urlFromVercel() ?? "http://localhost:3000";
+  return (
+    urlFromServerEnv() ??
+    urlFromEnvIfPublic() ??
+    urlFromVercel() ??
+    "http://localhost:3000"
+  );
+}
+
+/** Password-reset and other auth emails — never use localhost on Vercel. */
+export function getAppUrlForAuth() {
+  const base = getAppUrl();
+  if (isVercelRuntime()) {
+    try {
+      if (isLocalHost(new URL(base).host)) {
+        const deployment = urlFromServerEnv() ?? urlFromVercel();
+        if (deployment) return deployment;
+      }
+    } catch {
+      // fall through
+    }
+  }
+  return base;
 }
