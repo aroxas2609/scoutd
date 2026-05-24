@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { clearAuthQueries } from "@/features/auth/auth-query-cache";
@@ -15,6 +15,7 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const qc = useQueryClient();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -57,7 +58,10 @@ export function LoginForm() {
       .single();
 
     clearAuthQueries(qc);
-    router.push(getPostLoginRedirect(profile));
+    const redirect = searchParams.get("redirect");
+    const destination =
+      redirect?.startsWith("/") ? redirect : getPostLoginRedirect(profile);
+    router.push(destination);
     router.refresh();
   }
 

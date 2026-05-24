@@ -5,14 +5,23 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { EmailOtpType } from "@supabase/supabase-js";
 
+function resolveCallbackTarget(searchParams: URLSearchParams) {
+  const next = searchParams.get("next");
+  if (next?.startsWith("/")) return next;
+
+  const type = searchParams.get("type");
+  if (type === "recovery") return "/update-password";
+
+  return "/role";
+}
+
 function AuthCallbackInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
     const supabase = createClient();
-    const next = searchParams.get("next") ?? "/role";
-    const target = next.startsWith("/") ? next : `/${next}`;
+    const target = resolveCallbackTarget(searchParams);
 
     async function finish() {
       const code = searchParams.get("code");
@@ -59,8 +68,8 @@ function AuthCallbackInner() {
         }
       }
 
-      router.replace(target);
-      router.refresh();
+      // Full navigation so cookies are visible to the next page (avoids login redirect loop).
+      window.location.assign(target);
     }
 
     void finish();

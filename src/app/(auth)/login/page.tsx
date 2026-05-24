@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -18,7 +19,9 @@ export default function LoginPage() {
       <GlassCard className="w-full p-8">
         <h1 className="font-display text-2xl font-bold">Welcome back</h1>
         <p className="mt-1 text-sm text-muted-foreground">Sign in to continue scouting</p>
-        <LoginForm />
+        <Suspense fallback={<p className="mt-6 text-sm text-muted-foreground">Loading…</p>}>
+          <LoginForm />
+        </Suspense>
       </GlassCard>
     </AuthPageShell>
   );
