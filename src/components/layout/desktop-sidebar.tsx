@@ -1,15 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useIsCoachViewer } from "@/features/auth/use-viewer-role";
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 import { appNavTabs, getTabLabel } from "@/components/layout/app-nav-tabs";
+import { prefetchAppTabRoute } from "@/features/navigation/prefetch-app-tabs";
 
 export function DesktopSidebar({ unreadMessages = 0 }: { unreadMessages?: number }) {
   const pathname = usePathname();
-  const { isPlayer, isCoach } = useIsCoachViewer();
+  const router = useRouter();
+  const qc = useQueryClient();
+  const { isPlayer, isCoach, role, userId } = useIsCoachViewer();
+
+  function warmTab(href: string) {
+    router.prefetch(href);
+    if (userId) {
+      prefetchAppTabRoute(qc, href, { userId, role });
+    }
+  }
 
   const visibleTabs = appNavTabs.filter((tab) => !tab.coachOnly || isCoach);
 
@@ -34,6 +45,7 @@ export function DesktopSidebar({ unreadMessages = 0 }: { unreadMessages?: number
               key={tab.href}
               href={tab.href}
               prefetch
+              onMouseEnter={() => warmTab(tab.href)}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                 active

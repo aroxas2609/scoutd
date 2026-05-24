@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { resolveAuthSession } from "@/lib/auth/resolve-auth-session";
 import type { Message } from "@/types/database";
 import {
   fetchParticipantsByUserIds,
@@ -87,23 +88,24 @@ async function fetchConversationPreviews(
   return fetchConversationPreviewsLegacy(supabase, userId, inboxFilter);
 }
 
+export const fetchConversationsForUser = fetchConversationPreviews;
+
 export function useConversations(
   inboxFilter: ConversationInboxFilter = "active",
   options?: { enabled?: boolean }
 ) {
   const supabase = createClient();
+  const qc = useQueryClient();
   const enabled = options?.enabled ?? true;
 
   return useQuery({
     queryKey: ["conversations", inboxFilter],
     enabled,
     queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return [];
+      const session = await resolveAuthSession(qc);
+      if (!session) return [];
 
-      return fetchConversationPreviews(supabase, user.id, inboxFilter);
+      return fetchConversationPreviews(supabase, session.userId, inboxFilter);
     },
   });
 }
@@ -160,15 +162,15 @@ async function fetchUnreadMessageCount(
 
 export function useUnreadMessageCount() {
   const supabase = createClient();
+  const qc = useQueryClient();
+
   return useQuery({
     queryKey: ["unread-messages-count"],
     queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return 0;
+      const session = await resolveAuthSession(qc);
+      if (!session) return 0;
 
-      return fetchUnreadMessageCount(supabase, user.id);
+      return fetchUnreadMessageCount(supabase, session.userId);
     },
   });
 }

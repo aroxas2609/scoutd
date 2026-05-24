@@ -15,6 +15,7 @@ import {
   fetchViewerRole,
 } from "@/features/auth/use-viewer-role";
 import { useUnreadMessageCount } from "@/features/messaging/hooks";
+import { prefetchAppTabs } from "@/features/navigation/prefetch-app-tabs";
 import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -27,12 +28,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void qc
       .ensureQueryData({ queryKey: AUTH_USER_ID_KEY, queryFn: fetchAuthUserId })
-      .then((userId) => {
-        if (userId) {
-          void qc.prefetchQuery({
-            queryKey: viewerRoleQueryKey(userId),
-            queryFn: fetchViewerRole,
+      .then(async (userId) => {
+        if (!userId) return;
+
+        const viewer = await qc.ensureQueryData({
+          queryKey: viewerRoleQueryKey(userId),
+          queryFn: fetchViewerRole,
+        });
+
+        const schedulePrefetch = () => {
+          prefetchAppTabs(qc, {
+            userId,
+            role: viewer?.role ?? null,
           });
+        };
+
+        if (typeof requestIdleCallback === "function") {
+          requestIdleCallback(schedulePrefetch, { timeout: 3000 });
+        } else {
+          window.setTimeout(schedulePrefetch, 2000);
         }
       });
   }, [qc]);

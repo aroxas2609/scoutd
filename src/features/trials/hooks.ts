@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { resolveAuthSession } from "@/lib/auth/resolve-auth-session";
 import {
   deleteTrialInvite,
   setTrialInviteArchived,
@@ -137,33 +138,41 @@ function applyTrialArchiveFilter(
   return query.is(column, null);
 }
 
+export async function fetchTrialsForViewer(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  role: "coach" | "player" | null,
+  inboxFilter: TrialInboxFilter
+) {
+  let q = supabase.from("trial_invites").select("*").order("scheduled_at", { ascending: true });
+
+  q = applyTrialArchiveFilter(q, userId, role, inboxFilter);
+
+  const { data, error } = await q;
+  if (error) throw error;
+  const trials = (data ?? []) as TrialInvite[];
+  return enrichTrialInvites(supabase, trials, role);
+}
+
 export function useTrials(inboxFilter: TrialInboxFilter = "active") {
   const supabase = createClient();
+  const qc = useQueryClient();
 
   return useQuery({
     queryKey: ["trials", inboxFilter],
     queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return [];
+      const session = await resolveAuthSession(qc);
+      if (!session) return [];
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
+      const viewerRole =
+        session.role === "coach" || session.role === "player" ? session.role : null;
 
-      const role = (profile?.role as "coach" | "player" | null) ?? null;
-
-      let q = supabase.from("trial_invites").select("*").order("scheduled_at", { ascending: true });
-
-      q = applyTrialArchiveFilter(q, user.id, role, inboxFilter);
-
-      const { data, error } = await q;
-      if (error) throw error;
-      const trials = (data ?? []) as TrialInvite[];
-      return enrichTrialInvites(supabase, trials, role);
+      return fetchTrialsForViewer(
+        supabase,
+        session.userId,
+        viewerRole,
+        inboxFilter
+      );
     },
   });
 }

@@ -1,20 +1,18 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { resolveAuthSession } from "@/lib/auth/resolve-auth-session";
 import type { PlayerProfile } from "@/types/database";
 
-async function fetchShortlistPlayers(): Promise<PlayerProfile[]> {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
-
+export async function fetchShortlistPlayersForUser(
+  supabase: ReturnType<typeof createClient>,
+  userId: string
+): Promise<PlayerProfile[]> {
   const { data: saved } = await supabase
     .from("saved_players")
     .select("player_id")
-    .eq("coach_id", user.id);
+    .eq("coach_id", userId);
 
   if (!saved?.length) return [];
 
@@ -28,9 +26,16 @@ async function fetchShortlistPlayers(): Promise<PlayerProfile[]> {
 }
 
 export function useShortlistPlayers() {
+  const supabase = createClient();
+  const qc = useQueryClient();
+
   return useQuery({
     queryKey: ["shortlist"],
-    queryFn: fetchShortlistPlayers,
+    queryFn: async () => {
+      const session = await resolveAuthSession(qc);
+      if (!session) return [];
+      return fetchShortlistPlayersForUser(supabase, session.userId);
+    },
     staleTime: 60 * 1000,
   });
 }

@@ -1,27 +1,16 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useIsCoachViewer } from "@/features/auth/use-viewer-role";
+import { PlayerSearchView } from "@/components/discovery/player-search-view";
+import { CoachSearchView } from "@/components/discovery/coach-search-view";
 import { PremiumButton } from "@/components/ui/premium-button";
 import { PageLoader } from "@/components/ui/page-loader";
-
-const PlayerSearchView = dynamic(
-  () =>
-    import("@/components/discovery/player-search-view").then((m) => m.PlayerSearchView),
-  { loading: () => <PageLoader /> }
-);
-
-const CoachSearchView = dynamic(
-  () =>
-    import("@/components/discovery/coach-search-view").then((m) => m.CoachSearchView),
-  { loading: () => <PageLoader /> }
-);
 
 export default function SearchPage() {
   const { isCoach, isPlayer, role, userId, isLoading, isError } = useIsCoachViewer();
 
-  if (isLoading) {
+  if (isLoading && !role) {
     return <PageLoader />;
   }
 

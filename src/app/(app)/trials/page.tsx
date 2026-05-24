@@ -14,10 +14,9 @@ export default function TrialsPage() {
   const [inboxFilter, setInboxFilter] = useState<TrialInboxFilter>("active");
   useTrialsRealtime();
   const { data: trials, isLoading } = useTrials(inboxFilter);
-  const { data: archivedTrials } = useTrials("archived");
   const { isPlayer } = useIsCoachViewer();
 
-  const archivedCount = archivedTrials?.length ?? 0;
+  const archivedCount = inboxFilter === "archived" ? (trials?.length ?? 0) : 0;
 
   return (
     <div>
@@ -30,7 +29,10 @@ export default function TrialsPage() {
             { value: "active", label: "Inbox" },
             {
               value: "archived",
-              label: archivedCount > 0 ? `Archived (${archivedCount})` : "Archived",
+              label:
+                inboxFilter === "archived" && archivedCount > 0
+                  ? `Archived (${archivedCount})`
+                  : "Archived",
             },
           ]}
         />
