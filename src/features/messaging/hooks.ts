@@ -15,6 +15,7 @@ import {
   mapRpcRowsToConversationPreviews,
   type ConversationPreviewRpcRow,
 } from "./conversation-previews-rpc";
+import { sumUnreadFromPreviews } from "./unread-count";
 
 export type ConversationInboxFilter = "active" | "archived";
 
@@ -143,6 +144,20 @@ export function useMessagingInboxRealtime() {
 let inboxRealtimeRefCount = 0;
 let inboxRealtimeChannel: RealtimeChannel | null = null;
 
+async function fetchUnreadMessageCount(
+  supabase: ReturnType<typeof createClient>,
+  userId: string
+): Promise<number> {
+  const { data, error } = await supabase.rpc("get_unread_message_count");
+
+  if (!error && data != null) {
+    return typeof data === "number" ? data : Number(data);
+  }
+
+  const previews = await fetchConversationPreviews(supabase, userId, "active");
+  return sumUnreadFromPreviews(previews);
+}
+
 export function useUnreadMessageCount() {
   const supabase = createClient();
   return useQuery({
@@ -153,8 +168,7 @@ export function useUnreadMessageCount() {
       } = await supabase.auth.getUser();
       if (!user) return 0;
 
-      const previews = await fetchConversationPreviews(supabase, user.id, "active");
-      return previews.reduce((sum, p) => sum + p.unread_count, 0);
+      return fetchUnreadMessageCount(supabase, user.id);
     },
   });
 }
@@ -270,6 +284,7 @@ export function useMessages(conversationId: string) {
         async () => {
           qc.invalidateQueries({ queryKey: ["messages", conversationId] });
           qc.invalidateQueries({ queryKey: ["conversations"] });
+          qc.invalidateQueries({ queryKey: ["unread-messages-count"] });
           const {
             data: { user },
           } = await supabase.auth.getUser();
@@ -384,6 +399,7 @@ export function useEditMessage(conversationId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["messages", conversationId] });
       qc.invalidateQueries({ queryKey: ["conversations"] });
+      qc.invalidateQueries({ queryKey: ["unread-messages-count"] });
     },
   });
 }

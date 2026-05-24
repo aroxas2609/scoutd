@@ -4,10 +4,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { Notification } from "@/types/database";
 
-export function useNotifications() {
+export function useNotifications(options?: { enabled?: boolean }) {
   const supabase = createClient();
+  const enabled = options?.enabled ?? true;
+
   return useQuery({
     queryKey: ["notifications"],
+    enabled,
     queryFn: async () => {
       const {
         data: { user },
@@ -24,6 +27,28 @@ export function useNotifications() {
   });
 }
 
+export function useUnreadNotificationCount() {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return 0;
+
+      const { count, error } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .is("read_at", null);
+
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+}
+
 export function useMarkNotificationRead() {
   const supabase = createClient();
   const qc = useQueryClient();
@@ -34,6 +59,8 @@ export function useMarkNotificationRead() {
         .update({ read_at: new Date().toISOString() })
         .eq("id", id);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
   });
 }

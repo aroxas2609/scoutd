@@ -17,7 +17,6 @@ import { CoachProfileEditDialog } from "@/components/profile/coach-profile-edit-
 import { ChangePasswordSection } from "@/components/auth/change-password-section";
 import { DeleteAccountSection } from "@/components/auth/delete-account-section";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { SwitchAccountTypeRow } from "@/components/profile/switch-account-type-row";
 import { MessagePlayerButton } from "@/components/messaging/message-player-button";
 import { coachProfileHeading } from "@/features/profile/coach-display";
 import { ProfileDetailRow, ProfileSection } from "@/components/profile/profile-detail-row";
@@ -71,6 +70,7 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
             src={coach.banner_url}
             alt=""
             fill
+            priority
             className="object-cover"
             sizes="(max-width: 1024px) 100vw, 1024px"
           />
@@ -91,7 +91,14 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
           ) : (
             <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-full border border-white/[0.1] bg-[var(--bg-elevated)] lg:h-28 lg:w-28">
               {logo ? (
-                <Image src={logo} alt={heading.primary} fill className="object-cover" sizes="88px" />
+                <Image
+                  src={logo}
+                  alt={heading.primary}
+                  fill
+                  priority={!coach.banner_url}
+                  className="object-cover"
+                  sizes="88px"
+                />
               ) : (
                 <div className="flex h-full items-center justify-center">
                   <Building2 className="h-8 w-8 text-muted-foreground" />
@@ -190,7 +197,6 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
               />
               <CoachProfileEditDialog coach={coach} embedded />
               <ChangePasswordSection embedded />
-              <SwitchAccountTypeRow />
             </ProfileSettingsCard>
             <SignOutButton />
             <DeleteAccountSection />

@@ -55,6 +55,20 @@ export async function middleware(request: NextRequest) {
       if (path === "/update-password" || path === "/forgot-password") {
         return supabaseResponse;
       }
+      // Sign-in link should show the login form, not role selection (e.g. stale session, no role yet).
+      if (path === "/login") {
+        if (!setupTarget) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/search";
+          return NextResponse.redirect(url);
+        }
+        if (setupTarget.startsWith("/onboarding")) {
+          const url = request.nextUrl.clone();
+          url.pathname = setupTarget;
+          return NextResponse.redirect(url);
+        }
+        return supabaseResponse;
+      }
       const authTarget = getPostLoginRedirect(profile);
       if (shouldRedirect(path, authTarget)) {
         const url = request.nextUrl.clone();

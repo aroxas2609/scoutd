@@ -22,23 +22,32 @@ export function useCoach(userId: string) {
   });
 }
 
-export function useCoachSearch(filters: CoachSearchFilters) {
+export function useCoachSearch(
+  filters: CoachSearchFilters,
+  options?: { enabled?: boolean }
+) {
   const supabase = createClient();
+  const searchEnabled = options?.enabled ?? true;
+
   return useInfiniteQuery({
     queryKey: ["coaches", "search", filters],
     queryFn: ({ pageParam = 0 }) => searchCoaches(supabase, filters, pageParam),
     initialPageParam: 0,
+    enabled: searchEnabled,
     placeholderData: keepPreviousData,
     getNextPageParam: (lastPage, _, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
   });
 }
 
+const DISCOVER_SECTION_STALE_MS = 5 * 60 * 1000;
+
 export function useFeaturedCoaches() {
   const supabase = createClient();
   return useQuery({
     queryKey: ["coaches", "featured"],
     queryFn: () => getFeaturedCoaches(supabase),
+    staleTime: DISCOVER_SECTION_STALE_MS,
   });
 }
 
@@ -47,6 +56,7 @@ export function useRecruitingCoaches() {
   return useQuery({
     queryKey: ["coaches", "recruiting"],
     queryFn: () => getCoachesWithRecruitingNeeds(supabase),
+    staleTime: DISCOVER_SECTION_STALE_MS,
   });
 }
 
@@ -122,5 +132,6 @@ export function useAllCoaches(limit = 12) {
   return useQuery({
     queryKey: ["coaches", "all", limit],
     queryFn: () => listCoaches(supabase, limit),
+    staleTime: DISCOVER_SECTION_STALE_MS,
   });
 }

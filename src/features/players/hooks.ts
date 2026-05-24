@@ -1,6 +1,6 @@
 "use client";
 
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { usePostcodeLocations } from "@/features/locations/hooks";
 import { useCoachSearchLocation } from "@/features/coaches/hooks";
@@ -15,6 +15,9 @@ import {
 } from "./repository";
 import type { PlayerSearchFilters } from "@/types/database";
 import { shouldRunPlayerSearch } from "./search-enabled";
+
+const DISCOVER_SECTION_STALE_MS = 5 * 60 * 1000;
+const PLAYER_SEARCH_STALE_MS = 60 * 1000;
 
 export function usePlayerSearch(
   filters: PlayerSearchFilters,
@@ -36,8 +39,8 @@ export function usePlayerSearch(
         nearbyActive && locations.data ? locations.data : undefined
       ),
     initialPageParam: 0,
-    staleTime: 0,
-    refetchOnMount: true,
+    staleTime: PLAYER_SEARCH_STALE_MS,
+    placeholderData: keepPreviousData,
     enabled:
       searchEnabled && (!nearbyActive || !!locations.data),
     getNextPageParam: (lastPage, _, lastPageParam) =>
@@ -50,6 +53,7 @@ export function useFeaturedPlayers() {
   return useQuery({
     queryKey: ["players", "featured"],
     queryFn: () => getFeaturedPlayers(supabase),
+    staleTime: DISCOVER_SECTION_STALE_MS,
   });
 }
 
@@ -58,6 +62,7 @@ export function useTrendingPlayers() {
   return useQuery({
     queryKey: ["players", "trending"],
     queryFn: () => getTrendingPlayers(supabase),
+    staleTime: DISCOVER_SECTION_STALE_MS,
   });
 }
 
@@ -77,6 +82,7 @@ export function useNearbyPlayers(radiusKm = DEFAULT_RADIUS_KM) {
         coach.coachDistrict?.postcode
       ),
     enabled: !!coach.location && !!locations.data,
+    staleTime: DISCOVER_SECTION_STALE_MS,
   });
 }
 
@@ -85,6 +91,7 @@ export function useRecentlyActive() {
   return useQuery({
     queryKey: ["players", "active"],
     queryFn: () => getRecentlyActive(supabase),
+    staleTime: DISCOVER_SECTION_STALE_MS,
   });
 }
 

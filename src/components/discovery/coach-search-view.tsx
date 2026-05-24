@@ -1,12 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryState } from "nuqs";
 import { AppHeader } from "@/components/layout/app-header";
 import { CoachCard } from "@/components/discovery/coach-card";
 import { CoachDiscoverSections } from "@/components/discovery/coach-discover-sections";
-import { CoachFilterDrawer } from "@/components/discovery/coach-filter-drawer";
+import { PageLoader } from "@/components/ui/page-loader";
 import { useCoachSearch } from "@/features/coaches/hooks";
+import { shouldRunCoachSearch } from "@/features/coaches/search-enabled";
+
+const CoachFilterDrawer = dynamic(
+  () =>
+    import("@/components/discovery/coach-filter-drawer").then((m) => m.CoachFilterDrawer),
+  { loading: () => <PageLoader /> }
+);
 import { Input } from "@/components/ui/input";
 import { Search, Building2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,14 +28,26 @@ export function CoachSearchView() {
   const [filters, setFilters] = useState<CoachSearchFilters>({
     query: debouncedQuery || undefined,
   });
-  const search = useCoachSearch(filters);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const filterCount = [filters.league, filters.location].filter(Boolean).length;
+  const hasActiveFilters = filterCount > 0;
+  const isBrowsing = !debouncedQuery.trim() && !hasActiveFilters;
+
+  const search = useCoachSearch(filters, {
+    enabled: shouldRunCoachSearch({
+      isBrowsing,
+      hasQuery: !!debouncedQuery.trim(),
+      hasActiveFilters,
+    }),
+  });
 
   useEffect(() => {
     setFilters((f) => ({ ...f, query: debouncedQuery || undefined }));
   }, [debouncedQuery]);
 
   useEffect(() => {
+    if (isBrowsing) return;
     const el = loadMoreRef.current;
     if (!el) return;
     const obs = new IntersectionObserver((entries) => {
@@ -35,16 +55,13 @@ export function CoachSearchView() {
     });
     obs.observe(el);
     return () => obs.disconnect();
-  }, [search]);
+  }, [search, isBrowsing]);
 
   const coaches = useMemo(
     () => search.data?.pages.flatMap((p) => p.data ?? []).filter(Boolean) ?? [],
     [search.data]
   );
   const showInitialSkeleton = search.isPending && coaches.length === 0;
-  const filterCount = [filters.league, filters.location].filter(Boolean).length;
-  const hasActiveFilters = filterCount > 0;
-  const isBrowsing = !debouncedQuery.trim() && !hasActiveFilters;
 
   return (
     <div>

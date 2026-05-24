@@ -17,10 +17,14 @@ import { DiscoverFilterChips } from "@/components/discovery/discover-filter-chip
 import { NearbyRadiusControls } from "@/components/discovery/nearby-radius-controls";
 import { PlayersNearClubWidget } from "@/components/discovery/players-near-club-widget";
 import {
-  FilterDrawer,
   countActivePlayerFilters,
   type DrawerFilterState,
 } from "@/components/discovery/filter-drawer";
+
+const FilterDrawer = dynamic(
+  () => import("@/components/discovery/filter-drawer").then((m) => m.FilterDrawer),
+  { loading: () => <PageLoader /> }
+);
 import { PlayerFiltersSidebar } from "@/components/discovery/player-filters-sidebar";
 import { useCoachDistrict, useCoachSearchLocation } from "@/features/coaches/hooks";
 import { useIsCoachViewer } from "@/features/auth/use-viewer-role";
