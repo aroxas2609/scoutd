@@ -1,13 +1,22 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
 import { GlassCard } from "@/components/ui/glass-card";
+import { clearAuthQueries } from "@/features/auth/auth-query-cache";
 import { selectRole } from "@/features/auth/role-actions";
+import type { UserRole } from "@/types/database";
 import { User, Users } from "lucide-react";
 import { fadeUp, staggerContainer } from "@/lib/design/motion";
 
 export default function RolePage() {
+  const qc = useQueryClient();
+
+  async function handleSelectRole(role: UserRole) {
+    clearAuthQueries(qc);
+    await selectRole(role);
+  }
   return (
     <AuthPageShell align="start">
       <motion.div
@@ -21,7 +30,12 @@ export default function RolePage() {
         <p className="mt-2 text-sm text-muted-foreground">How will you use Scoutd?</p>
       </motion.div>
       <motion.div variants={fadeUp}>
-        <form action={selectRole.bind(null, "player")}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleSelectRole("player");
+          }}
+        >
           <button type="submit" className="w-full text-left">
             <GlassCard glow className="flex items-center gap-4 p-6 transition-transform hover:scale-[1.02]">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent-electric)]/20">
@@ -36,7 +50,12 @@ export default function RolePage() {
         </form>
       </motion.div>
       <motion.div variants={fadeUp}>
-        <form action={selectRole.bind(null, "coach")}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleSelectRole("coach");
+          }}
+        >
           <button type="submit" className="w-full text-left">
             <GlassCard className="flex items-center gap-4 p-6 transition-transform hover:scale-[1.02]">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent-neon)]/20">

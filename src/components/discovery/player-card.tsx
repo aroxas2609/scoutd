@@ -55,7 +55,6 @@ export function PlayerCard({ player, distanceKm, onSave, saved, compact }: Playe
               src={avatar}
               alt={name}
               fill
-              unoptimized
               className="object-cover"
               sizes="(max-width: 512px) 100vw, 512px"
               onError={() => setAvatarError(true)}

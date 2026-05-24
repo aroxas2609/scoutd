@@ -17,6 +17,7 @@ import { CoachProfileEditDialog } from "@/components/profile/coach-profile-edit-
 import { ChangePasswordSection } from "@/components/auth/change-password-section";
 import { DeleteAccountSection } from "@/components/auth/delete-account-section";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { SwitchAccountTypeRow } from "@/components/profile/switch-account-type-row";
 import { MessagePlayerButton } from "@/components/messaging/message-player-button";
 import { coachProfileHeading } from "@/features/profile/coach-display";
 import { ProfileDetailRow, ProfileSection } from "@/components/profile/profile-detail-row";
@@ -189,6 +190,7 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
               />
               <CoachProfileEditDialog coach={coach} embedded />
               <ChangePasswordSection embedded />
+              <SwitchAccountTypeRow />
             </ProfileSettingsCard>
             <SignOutButton />
             <DeleteAccountSection />

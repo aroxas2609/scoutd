@@ -8,6 +8,9 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: ["lucide-react", "date-fns"],
+  },
   images: {
     remotePatterns: [
       {

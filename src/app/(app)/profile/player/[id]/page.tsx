@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect } from "react";
 import { usePlayer } from "@/features/players/hooks";
 import { useViewerRole } from "@/features/auth/use-viewer-role";
 import { PlayerProfileView } from "@/components/profile/player-profile-view";
@@ -35,32 +35,26 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ id: st
   const { data, isLoading } = usePlayer(id);
   const { data: viewer } = useViewerRole();
   const player = data?.data ?? null;
-  const [isOwn, setIsOwn] = useState(false);
-
-  useEffect(() => {
-    createClient().auth.getUser().then(({ data: { user } }) => {
-      setIsOwn(user?.id === id);
-    });
-  }, [id]);
+  const isOwn = viewer?.userId === id;
 
   useEffect(() => {
     async function trackView() {
+      const viewerId = viewer?.userId;
+      if (!viewerId || viewerId === id) return;
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || user.id === id) return;
-      await supabase.from("profile_views").insert({ viewer_id: user.id, viewed_id: id });
+      await supabase.from("profile_views").insert({ viewer_id: viewerId, viewed_id: id });
       await supabase.from("notifications").insert({
         user_id: id,
         type: "profile_viewed",
         title: "Profile viewed",
         body: "A coach viewed your profile",
-        metadata: { viewer_id: user.id },
+        metadata: { viewer_id: viewerId },
       });
     }
-    trackView();
-  }, [id]);
+    if (viewer?.userId) {
+      trackView();
+    }
+  }, [id, viewer?.userId]);
 
   if (isLoading && !player) return <PlayerProfileSkeleton />;
   if (!player) {

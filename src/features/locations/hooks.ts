@@ -19,6 +19,6 @@ export function usePostcodeLocations() {
       return { locationsMap, associationPostcodes };
     },
     staleTime: 60 * 60 * 1000,
-    refetchOnMount: true,
+    refetchOnMount: false,
   });
 }

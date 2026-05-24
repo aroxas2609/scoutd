@@ -2,6 +2,7 @@
 
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthQuerySync } from "@/features/auth/auth-query-sync";
 import { QueryProvider } from "./query-provider";
 import { ThemeProvider } from "./theme-provider";
 
@@ -9,6 +10,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
       <QueryProvider>
+        <AuthQuerySync />
         <NuqsAdapter>
           {children}
           <Toaster

@@ -1,12 +1,18 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import { AppHeader } from "@/components/layout/app-header";
 import { PlayerCard } from "@/components/discovery/player-card";
 import { PlayerDiscoverSections } from "@/components/discovery/player-discover-sections";
-import { SwipeDeck } from "@/components/discovery/swipe-deck";
+import { PageLoader } from "@/components/ui/page-loader";
+
+const SwipeDeck = dynamic(
+  () => import("@/components/discovery/swipe-deck").then((m) => m.SwipeDeck),
+  { loading: () => <PageLoader /> }
+);
 import { DiscoverFilterChips } from "@/components/discovery/discover-filter-chips";
 import { NearbyRadiusControls } from "@/components/discovery/nearby-radius-controls";
 import { PlayersNearClubWidget } from "@/components/discovery/players-near-club-widget";
@@ -31,6 +37,7 @@ import {
   isRadiusKm,
   type RadiusKm,
 } from "@/lib/geo/location-radius";
+import { shouldRunPlayerSearch } from "@/features/players/search-enabled";
 export function PlayerSearchView() {
   const [query, setQuery] = useQueryState("q", { defaultValue: "" });
   const [nearbyParam, setNearbyParam] = useQueryState("nearby", parseAsString);
@@ -78,10 +85,23 @@ export function PlayerSearchView() {
     ]
   );
 
-  const search = usePlayerSearch(filters);
   const featured = useFeaturedPlayers();
   const trending = useTrendingPlayers();
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const hasActiveFilters = countActivePlayerFilters(filterState) > 0;
+  const isBrowsing =
+    !debouncedQuery.trim() && !hasActiveFilters && !myDistrict && !nearbyEnabled;
+
+  const search = usePlayerSearch(filters, {
+    enabled: shouldRunPlayerSearch({
+      isBrowsing,
+      hasQuery: !!debouncedQuery.trim(),
+      hasActiveFilters,
+      myDistrict,
+      nearbyEnabled,
+    }),
+  });
 
   const players = useMemo(
     () =>
@@ -90,9 +110,6 @@ export function PlayerSearchView() {
     [search.data]
   );
   const showInitialSkeleton = search.isPending && players.length === 0;
-  const hasActiveFilters = countActivePlayerFilters(filterState) > 0;
-  const isBrowsing =
-    !debouncedQuery.trim() && !hasActiveFilters && !myDistrict && !nearbyEnabled;
   const showDistrictSetup = myDistrict && !coachAssociationId;
   const showNearbySetup =
     nearbyEnabled && !coachSearch.isLoading && !coachSearch.canSearchNearby;

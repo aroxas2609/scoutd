@@ -35,12 +35,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  let profile: { role: string | null; onboarding_complete: boolean } | null = null;
+
   if (user) {
-    const { data: profile } = await supabase
+    const { data: profileRow } = await supabase
       .from("profiles")
       .select("role, onboarding_complete")
       .eq("id", user.id)
       .single();
+
+    profile = profileRow;
 
     const setupTarget = getSetupRedirectPath(profile);
 
@@ -74,12 +78,6 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAdmin && user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
     if (profile?.role !== "admin") {
       const url = request.nextUrl.clone();
       url.pathname = "/search";

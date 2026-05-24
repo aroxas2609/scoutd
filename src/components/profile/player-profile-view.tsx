@@ -31,6 +31,7 @@ import { PlayerProfileCoachActions } from "@/components/profile/player-profile-c
 import { ChangePasswordSection } from "@/components/auth/change-password-section";
 import { DeleteAccountSection } from "@/components/auth/delete-account-section";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { SwitchAccountTypeRow } from "@/components/profile/switch-account-type-row";
 import {
   ProfileAccountSection,
   ProfileSettingsCard,
@@ -76,6 +77,7 @@ function PlayerAccountSettings({
       <ProfileSettingsCard>
         <PlayerProfileEditDialog player={player} embedded />
         <ChangePasswordSection embedded />
+        <SwitchAccountTypeRow />
       </ProfileSettingsCard>
       <SignOutButton />
       <DeleteAccountSection />

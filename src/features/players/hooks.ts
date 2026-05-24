@@ -14,12 +14,17 @@ import {
   getPlayerById,
 } from "./repository";
 import type { PlayerSearchFilters } from "@/types/database";
+import { shouldRunPlayerSearch } from "./search-enabled";
 
-export function usePlayerSearch(filters: PlayerSearchFilters) {
+export function usePlayerSearch(
+  filters: PlayerSearchFilters,
+  options?: { enabled?: boolean }
+) {
   const supabase = createClient();
   const locations = usePostcodeLocations();
   const nearbyActive =
     filters.radiusKm != null && filters.latitude != null && filters.longitude != null;
+  const searchEnabled = options?.enabled ?? true;
 
   return useInfiniteQuery({
     queryKey: ["players", "search", filters],
@@ -33,7 +38,8 @@ export function usePlayerSearch(filters: PlayerSearchFilters) {
     initialPageParam: 0,
     staleTime: 0,
     refetchOnMount: true,
-    enabled: !nearbyActive || !!locations.data,
+    enabled:
+      searchEnabled && (!nearbyActive || !!locations.data),
     getNextPageParam: (lastPage, _, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
   });

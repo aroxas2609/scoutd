@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { resolveAppUrl } from "@/lib/auth/resolve-app-url";
@@ -192,11 +193,26 @@ export async function setUserRole(role: UserRole) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const roleChanged = existing?.role != null && existing.role !== role;
+
   const { error } = await supabase
     .from("profiles")
-    .update({ role })
+    .update({
+      role,
+      ...(roleChanged ? { onboarding_complete: false } : {}),
+    })
     .eq("id", user.id);
 
   if (error) throw new Error(error.message);
+
+  revalidatePath("/search");
+  revalidatePath("/profile");
+
   redirect(role === "coach" ? "/onboarding/coach" : "/onboarding/player");
 }

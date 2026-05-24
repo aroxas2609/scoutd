@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/layout/app-header";
 import {
@@ -12,7 +12,7 @@ import { MessagesEmptyState } from "@/components/messaging/messages-empty-state"
 import { ConversationListItem } from "@/components/messaging/conversation-list-item";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { PageLoader } from "@/components/ui/page-loader";
-import { createClient } from "@/lib/supabase/client";
+import { useViewerRole } from "@/features/auth/use-viewer-role";
 import { cn } from "@/lib/utils";
 
 type MessagesInboxPanelProps = {
@@ -26,15 +26,15 @@ export function MessagesInboxPanel({ variant = "page" }: MessagesInboxPanelProps
   const [inboxFilter, setInboxFilter] = useState<ConversationInboxFilter>("active");
   useMessagingInboxRealtime();
   const { data: conversations, isLoading } = useConversations(inboxFilter);
-  const { data: archivedList } = useConversations("archived");
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    createClient().auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
-  }, []);
+  const { data: archivedList } = useConversations("archived", {
+    enabled: inboxFilter === "archived",
+  });
+  const { data: viewer } = useViewerRole();
+  const userId = viewer?.userId ?? null;
 
   const totalUnread = conversations?.reduce((n, c) => n + c.unread_count, 0) ?? 0;
-  const archivedCount = archivedList?.length ?? 0;
+  const archivedCount =
+    inboxFilter === "archived" ? (archivedList?.length ?? 0) : 0;
   const isSidebar = variant === "sidebar";
 
   return (
@@ -78,7 +78,10 @@ export function MessagesInboxPanel({ variant = "page" }: MessagesInboxPanelProps
               { value: "active", label: "Inbox" },
               {
                 value: "archived",
-                label: archivedCount > 0 ? `Archived (${archivedCount})` : "Archived",
+                label:
+                  inboxFilter === "archived" && archivedCount > 0
+                    ? `Archived (${archivedCount})`
+                    : "Archived",
               },
             ]}
           />

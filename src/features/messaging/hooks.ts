@@ -9,14 +9,16 @@ import {
   fetchParticipantsByUserIds,
   type MessageParticipant,
 } from "./participant-display";
+import type { ConversationPreview } from "./types";
+import { buildConversationPreviews } from "./conversation-previews";
 import {
-  countUnreadMessages,
-  type ConversationPreview,
-} from "./types";
+  mapRpcRowsToConversationPreviews,
+  type ConversationPreviewRpcRow,
+} from "./conversation-previews-rpc";
 
 export type ConversationInboxFilter = "active" | "archived";
 
-async function fetchConversationPreviews(
+async function fetchConversationPreviewsLegacy(
   supabase: ReturnType<typeof createClient>,
   userId: string,
   inboxFilter: ConversationInboxFilter = "active"
@@ -54,74 +56,46 @@ async function fetchConversationPreviews(
   const otherUserIds = (otherParticipants ?? []).map((p) => p.user_id);
   const participantsByUserId = await fetchParticipantsByUserIds(supabase, otherUserIds);
 
-  const otherByConv = new Map(
-    (otherParticipants ?? []).map((p) => [
-      p.conversation_id,
-      participantsByUserId.get(p.user_id) ?? {
-        id: p.user_id,
-        full_name: null,
-        avatar_url: null,
-        role: null,
-        email: null,
-        club_name: null,
-      },
-    ])
+  return buildConversationPreviews(
+    participants as Parameters<typeof buildConversationPreviews>[0],
+    otherParticipants ?? [],
+    (allMessages ?? []) as Parameters<typeof buildConversationPreviews>[2],
+    participantsByUserId,
+    userId
   );
-
-  const messagesByConv = new Map<string, typeof allMessages>();
-  for (const msg of allMessages ?? []) {
-    const list = messagesByConv.get(msg.conversation_id) ?? [];
-    list.push(msg);
-    messagesByConv.set(msg.conversation_id, list);
-  }
-
-  const previews: ConversationPreview[] = participants.map((p) => {
-    const row = p as unknown as {
-      conversation_id: string;
-      last_read_at: string | null;
-      conversations:
-        | ConversationPreview["conversation"]
-        | ConversationPreview["conversation"][]
-        | null;
-    };
-    const conversation = Array.isArray(row.conversations)
-      ? row.conversations[0]
-      : row.conversations;
-    const msgs = messagesByConv.get(row.conversation_id) ?? [];
-    const lastMessage = msgs[0] ?? null;
-    const unread_count = countUnreadMessages(msgs, row.last_read_at, userId);
-
-    return {
-      conversation_id: row.conversation_id,
-      last_read_at: row.last_read_at,
-      conversation: conversation!,
-      other_user: otherByConv.get(row.conversation_id) ?? {
-        id: "",
-        full_name: null,
-        avatar_url: null,
-        role: null,
-        email: null,
-        club_name: null,
-      },
-      last_message: lastMessage,
-      unread_count,
-    };
-  });
-
-  previews.sort(
-    (a, b) =>
-      new Date(b.conversation.updated_at).getTime() -
-      new Date(a.conversation.updated_at).getTime()
-  );
-
-  return previews;
 }
 
-export function useConversations(inboxFilter: ConversationInboxFilter = "active") {
+async function fetchConversationPreviews(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  inboxFilter: ConversationInboxFilter = "active"
+): Promise<ConversationPreview[]> {
+  const { data, error } = await supabase.rpc("get_conversation_previews", {
+    p_inbox_filter: inboxFilter,
+  });
+
+  if (!error && data) {
+    const rows = data as ConversationPreviewRpcRow[];
+    const otherUserIds = rows
+      .map((r) => r.other_user_id)
+      .filter((id): id is string => !!id);
+    const participantsByUserId = await fetchParticipantsByUserIds(supabase, otherUserIds);
+    return mapRpcRowsToConversationPreviews(rows, participantsByUserId);
+  }
+
+  return fetchConversationPreviewsLegacy(supabase, userId, inboxFilter);
+}
+
+export function useConversations(
+  inboxFilter: ConversationInboxFilter = "active",
+  options?: { enabled?: boolean }
+) {
   const supabase = createClient();
+  const enabled = options?.enabled ?? true;
 
   return useQuery({
     queryKey: ["conversations", inboxFilter],
+    enabled,
     queryFn: async () => {
       const {
         data: { user },
@@ -182,7 +156,6 @@ export function useUnreadMessageCount() {
       const previews = await fetchConversationPreviews(supabase, user.id, "active");
       return previews.reduce((sum, p) => sum + p.unread_count, 0);
     },
-    refetchInterval: 60_000,
   });
 }
 

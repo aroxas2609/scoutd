@@ -1,35 +1,49 @@
 "use client";
 
 import { LogOut } from "lucide-react";
-import { signOut } from "@/features/auth/actions";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { createClient } from "@/lib/supabase/client";
+import { clearAuthQueries } from "@/features/auth/auth-query-cache";
 import { ProfileSettingsCard, ProfileSettingsRow } from "@/components/profile/profile-settings";
 
 export function SignOutButton({ embedded }: { embedded?: boolean }) {
+  const router = useRouter();
+  const qc = useQueryClient();
+
+  async function handleSignOut() {
+    clearAuthQueries(qc);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  }
+
   if (embedded) {
     return (
-      <form action={signOut}>
-        <ProfileSettingsRow
-          type="submit"
-          icon={LogOut}
-          label="Log out"
-          chevron="none"
-          destructive
-        />
-      </form>
+      <ProfileSettingsRow
+        icon={LogOut}
+        label="Log out"
+        chevron="none"
+        destructive
+        onClick={() => {
+          void handleSignOut();
+        }}
+      />
     );
   }
 
   return (
-    <form action={signOut}>
-      <ProfileSettingsCard>
-        <ProfileSettingsRow
-          type="submit"
-          icon={LogOut}
-          label="Log out"
-          chevron="none"
-          destructive
-        />
-      </ProfileSettingsCard>
-    </form>
+    <ProfileSettingsCard>
+      <ProfileSettingsRow
+        icon={LogOut}
+        label="Log out"
+        chevron="none"
+        destructive
+        onClick={() => {
+          void handleSignOut();
+        }}
+      />
+    </ProfileSettingsCard>
   );
 }
