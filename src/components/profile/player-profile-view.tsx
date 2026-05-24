@@ -40,6 +40,7 @@ import { ProfilePhotoUpload } from "@/components/profile/profile-photo-upload";
 import { PlayerProfileEditDialog } from "@/components/profile/player-profile-edit-dialog";
 import { PlayerMediaSection } from "@/components/profile/player-media-section";
 import { ProfileDetailRow, ProfileSection } from "@/components/profile/profile-detail-row";
+import { ProfileDetailHeader } from "@/components/profile/profile-detail-header";
 import { cn } from "@/lib/utils";
 
 interface PlayerProfileViewProps {
@@ -119,19 +120,23 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
         isOwn ? "lg:max-w-6xl" : "lg:max-w-5xl"
       )}
     >
-      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-white/[0.06] bg-[var(--bg-deep)]/90 px-4 py-3 backdrop-blur-md lg:px-6">
+      <ProfileDetailHeader>
         <button
           type="button"
           onClick={() =>
             navigateProfileBack(router, { currentPath: pathname, fallback: "/search" })
           }
-          className="flex h-11 w-11 min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-xl border border-white/[0.08] bg-[var(--bg-surface)] active:scale-[0.98]"
+          className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 touch-manipulation items-center justify-center rounded-xl border border-white/[0.08] bg-[var(--bg-surface)] active:scale-[0.98]"
           aria-label="Go back"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        {!isOwn ? <ReportBlockMenu userId={player.user_id} /> : <div className="w-10" />}
-      </div>
+        {!isOwn ? (
+          <ReportBlockMenu userId={player.user_id} />
+        ) : (
+          <div className="h-11 w-11 shrink-0" aria-hidden />
+        )}
+      </ProfileDetailHeader>
 
       <div className="px-4 pt-6 lg:px-6 lg:pt-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

@@ -28,6 +28,7 @@ import {
   ProfileSettingsRow,
 } from "@/components/profile/profile-settings";
 import { CoachAgeGroupsCard } from "@/components/profile/coach-age-groups-card";
+import { ProfileDetailHeader } from "@/components/profile/profile-detail-header";
 import type { CoachProfile } from "@/types/database";
 
 type Props = {
@@ -54,19 +55,23 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
 
   return (
     <div className="pb-28 lg:mx-auto lg:max-w-5xl lg:pb-8">
-      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-white/[0.06] bg-[var(--bg-deep)]/90 px-4 py-3 backdrop-blur-md lg:px-6">
+      <ProfileDetailHeader>
         <button
           type="button"
           onClick={() =>
             navigateProfileBack(router, { currentPath: pathname, fallback: "/search" })
           }
-          className="flex h-11 w-11 min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-xl border border-white/[0.08] bg-[var(--bg-surface)] active:scale-[0.98]"
+          className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 touch-manipulation items-center justify-center rounded-xl border border-white/[0.08] bg-[var(--bg-surface)] active:scale-[0.98]"
           aria-label="Go back"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        {!isOwn ? <ReportBlockMenu userId={coach.user_id} /> : <div className="w-10" />}
-      </div>
+        {!isOwn ? (
+          <ReportBlockMenu userId={coach.user_id} />
+        ) : (
+          <div className="h-11 w-11 shrink-0" aria-hidden />
+        )}
+      </ProfileDetailHeader>
 
       {coach.banner_url ? (
         <div className="relative mx-4 mt-4 aspect-[2.2/1] overflow-hidden rounded-2xl bg-[var(--bg-elevated)] lg:mx-6 lg:aspect-[21/9] lg:rounded-3xl">

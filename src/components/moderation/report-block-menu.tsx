@@ -13,7 +13,10 @@ import { toast } from "sonner";
 export function ReportBlockMenu({ userId }: { userId: string }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5">
+      <DropdownMenuTrigger
+        className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 touch-manipulation items-center justify-center rounded-xl border border-white/[0.08] bg-[var(--bg-surface)] active:scale-[0.98]"
+        aria-label="More options"
+      >
         <MoreVertical className="h-4 w-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-[var(--bg-graphite)]">
