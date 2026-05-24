@@ -89,13 +89,14 @@ export function PlayerSearchView() {
     ]
   );
 
-  const featured = useFeaturedPlayers();
-  const trending = useTrendingPlayers();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const hasActiveFilters = countActivePlayerFilters(filterState) > 0;
   const isBrowsing =
     !debouncedQuery.trim() && !hasActiveFilters && !myDistrict && !nearbyEnabled;
+
+  const featured = useFeaturedPlayers({ enabled: isBrowsing });
+  const trending = useTrendingPlayers({ enabled: isBrowsing });
 
   const search = usePlayerSearch(filters, {
     enabled: shouldRunPlayerSearch({
@@ -146,16 +147,19 @@ export function PlayerSearchView() {
     }
   }
 
+  const fetchNextPage = search.fetchNextPage;
+  const hasNextPage = search.hasNextPage;
+
   useEffect(() => {
     if (isBrowsing) return;
     const el = loadMoreRef.current;
     if (!el) return;
     const obs = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting && search.hasNextPage) search.fetchNextPage();
+      if (entries[0]?.isIntersecting && hasNextPage) void fetchNextPage();
     });
     obs.observe(el);
     return () => obs.disconnect();
-  }, [search, isBrowsing]);
+  }, [fetchNextPage, hasNextPage, isBrowsing]);
 
   const featuredList = featured.data?.data ?? [];
   const trendingList = trending.data?.data ?? [];
@@ -320,17 +324,12 @@ export function PlayerSearchView() {
           </div>
         ) : (
           <div className="px-4 pb-10 pt-5 lg:px-0 lg:pb-8 lg:pt-4">
-            {isCoach ? (
-              <div className="lg:hidden">
-                <PlayersNearClubWidget onSearchNearby={enableNearby} />
-              </div>
-            ) : null}
-            {isCoach ? (
-              <div className="mb-8 hidden lg:block">
-                <PlayersNearClubWidget layout="grid" onSearchNearby={enableNearby} />
-              </div>
-            ) : null}
-            <PlayerDiscoverSections hideNearbySection={isCoach} />
+            {isCoach ? <PlayersNearClubWidget onSearchNearby={enableNearby} /> : null}
+            <PlayerDiscoverSections
+              hideNearbySection={isCoach}
+              featuredList={featuredList}
+              trendingList={trendingList}
+            />
           </div>
         )
       ) : (

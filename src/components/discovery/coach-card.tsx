@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Building2, MapPin } from "lucide-react";
@@ -15,7 +16,7 @@ interface CoachCardProps {
   compact?: boolean;
 }
 
-export function CoachCard({ coach, compact }: CoachCardProps) {
+function CoachCardInner({ coach, compact }: CoachCardProps) {
   const { primary, secondary } = coachProfileHeading(coach);
   const logo = coach.logo_url ?? coach.profiles?.avatar_url;
   const preview = coach.recruiting_needs?.trim();
@@ -107,3 +108,5 @@ export function CoachCard({ coach, compact }: CoachCardProps) {
     </Link>
   );
 }
+
+export const CoachCard = memo(CoachCardInner);

@@ -10,20 +10,31 @@ import {
 import { EmptyStateCinematic } from "@/components/ui/empty-state";
 import { PageLoader } from "@/components/ui/page-loader";
 import { Users } from "lucide-react";
+import type { PlayerProfile, PlayerWithDistance } from "@/types/database";
 
 type PlayerDiscoverSectionsProps = {
   /** Hide duplicate nearby row when coach widget already shows nearby preview */
   hideNearbySection?: boolean;
+  /** When provided, skips duplicate featured/trending fetches from the parent */
+  featuredList?: PlayerProfile[];
+  trendingList?: PlayerProfile[];
 };
 
-export function PlayerDiscoverSections({ hideNearbySection = false }: PlayerDiscoverSectionsProps) {
-  const featured = useFeaturedPlayers();
-  const trending = useTrendingPlayers();
-  const nearby = useNearbyPlayers();
+export function PlayerDiscoverSections({
+  hideNearbySection = false,
+  featuredList: featuredListProp,
+  trendingList: trendingListProp,
+}: PlayerDiscoverSectionsProps) {
+  const skipFeaturedQuery = featuredListProp !== undefined;
+  const skipTrendingQuery = trendingListProp !== undefined;
+
+  const featured = useFeaturedPlayers({ enabled: !skipFeaturedQuery });
+  const trending = useTrendingPlayers({ enabled: !skipTrendingQuery });
+  const nearby = useNearbyPlayers(undefined, { enabled: !hideNearbySection });
   const active = useRecentlyActive();
 
-  const featuredList = featured.data?.data ?? [];
-  const trendingList = trending.data?.data ?? [];
+  const featuredList = featuredListProp ?? featured.data?.data ?? [];
+  const trendingList = trendingListProp ?? trending.data?.data ?? [];
   const nearbyList = nearby.data?.data ?? [];
   const activeList = active.data?.data ?? [];
   const showNearby = !hideNearbySection && nearbyList.length > 0;
@@ -33,7 +44,10 @@ export function PlayerDiscoverSections({ hideNearbySection = false }: PlayerDisc
     showNearby ||
     activeList.length > 0;
   const loading =
-    featured.isPending || trending.isPending || nearby.isPending || active.isPending;
+    (!skipFeaturedQuery && featured.isPending) ||
+    (!skipTrendingQuery && trending.isPending) ||
+    (!hideNearbySection && nearby.isPending) ||
+    active.isPending;
 
   if (loading) return <PageLoader />;
 
@@ -79,7 +93,7 @@ export function PlayerDiscoverSections({ hideNearbySection = false }: PlayerDisc
             Nearby
           </h2>
           <div className="-mx-4 mt-3.5 flex gap-3.5 overflow-x-auto px-4 hide-scrollbar lg:mx-0 lg:mt-3 lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:px-0 xl:grid-cols-4">
-            {nearbyList.map((p) => (
+            {(nearbyList as PlayerWithDistance[]).map((p) => (
               <PlayerCard key={p.user_id} player={p} distanceKm={p.distanceKm} compact />
             ))}
           </div>

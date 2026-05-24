@@ -14,7 +14,12 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   experimental: {
-    optimizePackageImports: ["lucide-react", "date-fns", "@base-ui/react"],
+    optimizePackageImports: [
+      "lucide-react",
+      "date-fns",
+      "@base-ui/react",
+      "framer-motion",
+    ],
   },
   images: {
     remotePatterns: [

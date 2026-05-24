@@ -3,15 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useUnreadMessageCount } from "@/features/messaging/hooks";
 import { useIsCoachViewer } from "@/features/auth/use-viewer-role";
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 import { appNavTabs, getTabLabel } from "@/components/layout/app-nav-tabs";
 
-export function DesktopSidebar() {
+export function DesktopSidebar({ unreadMessages = 0 }: { unreadMessages?: number }) {
   const pathname = usePathname();
   const { isPlayer, isCoach } = useIsCoachViewer();
-  const { data: unreadMessages = 0 } = useUnreadMessageCount();
 
   const visibleTabs = appNavTabs.filter((tab) => !tab.coachOnly || isCoach);
 

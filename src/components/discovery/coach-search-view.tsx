@@ -46,16 +46,19 @@ export function CoachSearchView() {
     setFilters((f) => ({ ...f, query: debouncedQuery || undefined }));
   }, [debouncedQuery]);
 
+  const fetchNextPage = search.fetchNextPage;
+  const hasNextPage = search.hasNextPage;
+
   useEffect(() => {
     if (isBrowsing) return;
     const el = loadMoreRef.current;
     if (!el) return;
     const obs = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting && search.hasNextPage) search.fetchNextPage();
+      if (entries[0]?.isIntersecting && hasNextPage) void fetchNextPage();
     });
     obs.observe(el);
     return () => obs.disconnect();
-  }, [search, isBrowsing]);
+  }, [fetchNextPage, hasNextPage, isBrowsing]);
 
   const coaches = useMemo(
     () => search.data?.pages.flatMap((p) => p.data ?? []).filter(Boolean) ?? [],

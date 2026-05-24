@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Bookmark, MapPin, Play, User } from "lucide-react";
@@ -18,7 +18,7 @@ interface PlayerCardProps {
   compact?: boolean;
 }
 
-export function PlayerCard({ player, distanceKm, onSave, saved, compact }: PlayerCardProps) {
+function PlayerCardInner({ player, distanceKm, onSave, saved, compact }: PlayerCardProps) {
   const name = player.profiles?.full_name ?? "Player";
   const avatar = player.profiles?.avatar_url;
   const [avatarError, setAvatarError] = useState(false);
@@ -56,7 +56,7 @@ export function PlayerCard({ player, distanceKm, onSave, saved, compact }: Playe
               alt={name}
               fill
               className="object-cover"
-              sizes="(max-width: 512px) 100vw, 512px"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 256px"
               onError={() => setAvatarError(true)}
             />
           ) : (
@@ -173,3 +173,5 @@ export function PlayerCard({ player, distanceKm, onSave, saved, compact }: Playe
     </Link>
   );
 }
+
+export const PlayerCard = memo(PlayerCardInner);

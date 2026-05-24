@@ -14,6 +14,7 @@ import {
   fetchAuthUserId,
   fetchViewerRole,
 } from "@/features/auth/use-viewer-role";
+import { useUnreadMessageCount } from "@/features/messaging/hooks";
 import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -21,6 +22,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isChatThread = /^\/messages\/[^/]+$/.test(pathname);
   const isMessagesRoute = pathname.startsWith("/messages");
   const qc = useQueryClient();
+  const { data: unreadMessages = 0 } = useUnreadMessageCount();
 
   useEffect(() => {
     void qc
@@ -43,12 +45,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh bg-[var(--bg-deep)]">
-      <DesktopSidebar />
+      <DesktopSidebar unreadMessages={unreadMessages} />
       <div className="flex min-w-0 flex-1 flex-col">
         <PageContainer as="main" className={mainPadding}>
           {children}
         </PageContainer>
-        {!isChatThread && <BottomTabBar />}
+        {!isChatThread && <BottomTabBar unreadMessages={unreadMessages} />}
       </div>
     </div>
   );

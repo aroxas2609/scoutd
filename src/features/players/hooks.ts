@@ -48,28 +48,36 @@ export function usePlayerSearch(
   });
 }
 
-export function useFeaturedPlayers() {
+export function useFeaturedPlayers(options?: { enabled?: boolean }) {
   const supabase = createClient();
+  const enabled = options?.enabled ?? true;
   return useQuery({
     queryKey: ["players", "featured"],
     queryFn: () => getFeaturedPlayers(supabase),
+    enabled,
     staleTime: DISCOVER_SECTION_STALE_MS,
   });
 }
 
-export function useTrendingPlayers() {
+export function useTrendingPlayers(options?: { enabled?: boolean }) {
   const supabase = createClient();
+  const enabled = options?.enabled ?? true;
   return useQuery({
     queryKey: ["players", "trending"],
     queryFn: () => getTrendingPlayers(supabase),
+    enabled,
     staleTime: DISCOVER_SECTION_STALE_MS,
   });
 }
 
-export function useNearbyPlayers(radiusKm = DEFAULT_RADIUS_KM) {
+export function useNearbyPlayers(
+  radiusKm = DEFAULT_RADIUS_KM,
+  options?: { enabled?: boolean }
+) {
   const supabase = createClient();
   const locations = usePostcodeLocations();
   const coach = useCoachSearchLocation();
+  const enabled = options?.enabled ?? true;
 
   return useQuery({
     queryKey: ["players", "nearby", radiusKm, coach.location?.lat, coach.location?.lng],
@@ -81,16 +89,18 @@ export function useNearbyPlayers(radiusKm = DEFAULT_RADIUS_KM) {
         radiusKm,
         coach.coachDistrict?.postcode
       ),
-    enabled: !!coach.location && !!locations.data,
+    enabled: enabled && !!coach.location && !!locations.data,
     staleTime: DISCOVER_SECTION_STALE_MS,
   });
 }
 
-export function useRecentlyActive() {
+export function useRecentlyActive(options?: { enabled?: boolean }) {
   const supabase = createClient();
+  const enabled = options?.enabled ?? true;
   return useQuery({
     queryKey: ["players", "active"],
     queryFn: () => getRecentlyActive(supabase),
+    enabled,
     staleTime: DISCOVER_SECTION_STALE_MS,
   });
 }

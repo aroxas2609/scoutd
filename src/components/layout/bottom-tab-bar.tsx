@@ -3,14 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useUnreadMessageCount } from "@/features/messaging/hooks";
 import { useIsCoachViewer } from "@/features/auth/use-viewer-role";
 import { appNavTabs, getTabLabel } from "@/components/layout/app-nav-tabs";
 
-export function BottomTabBar({ className }: { className?: string }) {
+export function BottomTabBar({
+  className,
+  unreadMessages = 0,
+}: {
+  className?: string;
+  unreadMessages?: number;
+}) {
   const pathname = usePathname();
   const { isPlayer, isCoach } = useIsCoachViewer();
-  const { data: unreadMessages = 0 } = useUnreadMessageCount();
 
   const visibleTabs = appNavTabs.filter((tab) => !tab.coachOnly || isCoach);
   const compact = visibleTabs.length > 5;
