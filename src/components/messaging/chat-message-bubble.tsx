@@ -4,10 +4,7 @@ import { useState } from "react";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Message } from "@/types/database";
-import {
-  useDeleteMessage,
-  useEditMessage,
-} from "@/features/messaging/hooks";
+import type { useDeleteMessage, useEditMessage } from "@/features/messaging/hooks";
 import {
   isMessageEdited,
   isMessageDeleted,
@@ -25,19 +22,19 @@ import { cn } from "@/lib/utils";
 
 type ChatMessageBubbleProps = {
   message: Message;
-  conversationId: string;
   isOwn: boolean;
   senderLabel?: string;
+  editMessage: ReturnType<typeof useEditMessage>;
+  deleteMessage: ReturnType<typeof useDeleteMessage>;
 };
 
 export function ChatMessageBubble({
   message,
-  conversationId,
   isOwn,
   senderLabel,
+  editMessage,
+  deleteMessage,
 }: ChatMessageBubbleProps) {
-  const editMessage = useEditMessage(conversationId);
-  const deleteMessage = useDeleteMessage(conversationId);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(message.body);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -124,13 +121,19 @@ export function ChatMessageBubble({
         {canModify && !editing && (
           <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
             <DropdownMenuTrigger
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-white"
+              className="flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-white active:bg-white/10"
               aria-label="Message options"
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal className="h-5 w-5" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[var(--bg-graphite)]">
+            <DropdownMenuContent
+              align="end"
+              side="top"
+              sideOffset={8}
+              className="z-[100] w-auto min-w-[9.5rem] border border-white/10 bg-[var(--bg-graphite)] text-foreground shadow-xl"
+            >
               <DropdownMenuItem
+                className="text-white focus:bg-white/10 focus:text-white"
                 onClick={(e) => {
                   e.preventDefault();
                   startEdit();
@@ -141,6 +144,7 @@ export function ChatMessageBubble({
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant="destructive"
+                className="focus:bg-red-500/15 focus:text-red-300"
                 onClick={(e) => {
                   e.preventDefault();
                   startDelete();

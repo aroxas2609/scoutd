@@ -1,6 +1,8 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { prefetchChat } from "@/features/messaging/prefetch-chat";
 import { formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -20,7 +22,12 @@ type Props = {
 };
 
 export function ConversationListItem({ item, currentUserId, inboxFilter }: Props) {
+  const qc = useQueryClient();
   const name = participantDisplayName(item.other_user);
+
+  function warmChatCache() {
+    prefetchChat(qc, item.conversation_id);
+  }
   const subtitle = messageListSubtitle(item.other_user);
   const avatarUrl = participantAvatarUrl(item.other_user);
   const initials = name
@@ -37,6 +44,9 @@ export function ConversationListItem({ item, currentUserId, inboxFilter }: Props
     <li className="flex items-stretch gap-1">
       <Link
         href={`/messages/${item.conversation_id}`}
+        onMouseEnter={warmChatCache}
+        onFocus={warmChatCache}
+        onTouchStart={warmChatCache}
         className={cn(
           "flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-transparent px-3 py-3 transition-colors hover:bg-white/[0.03]",
           hasUnread && "border-white/[0.06] bg-white/[0.02]"

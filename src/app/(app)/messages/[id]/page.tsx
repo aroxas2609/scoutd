@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect, useMemo } from "react";
+import { use, useState, useEffect, useMemo, useRef } from "react";
 import { useChatScroll } from "@/components/messaging/use-chat-scroll";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -8,7 +8,10 @@ import {
   useMessages,
   useSendMessage,
   useConversationPeer,
+  useEditMessage,
+  useDeleteMessage,
 } from "@/features/messaging/hooks";
+import { useViewerRole } from "@/features/auth/use-viewer-role";
 import { TrialInviteCard } from "@/components/messaging/trial-invite-card";
 import { ChatComposer } from "@/components/messaging/chat-composer";
 import { ChatMessageBubble } from "@/components/messaging/chat-message-bubble";
@@ -20,16 +23,19 @@ import {
 } from "@/features/messaging/participant-display";
 import { messageListSubtitle } from "@/features/profile/coach-display";
 import { profilePathFor } from "@/features/messaging/types";
-import { createClient } from "@/lib/supabase/client";
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: messages } = useMessages(id);
   const { data: peer, isLoading: peerLoading } = useConversationPeer(id);
   const sendMessage = useSendMessage(id);
+  const editMessage = useEditMessage(id);
+  const deleteMessage = useDeleteMessage(id);
+  const { data: viewer } = useViewerRole();
+  const userId = viewer?.userId ?? null;
   const [text, setText] = useState("");
-  const [userId, setUserId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const viewportStickRafRef = useRef<number | null>(null);
 
   const lastMessageKey = useMemo(() => {
     if (!messages?.length) return "empty";
@@ -40,15 +46,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const { scrollRef, stickToBottom } = useChatScroll(lastMessageKey);
 
   useEffect(() => {
-    createClient().auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
-  }, []);
-
-  useEffect(() => {
     const viewport = window.visualViewport;
     if (!viewport) return;
 
     function onViewportChange() {
-      stickToBottom();
+      if (viewportStickRafRef.current != null) return;
+      viewportStickRafRef.current = requestAnimationFrame(() => {
+        viewportStickRafRef.current = null;
+        stickToBottom();
+      });
     }
 
     viewport.addEventListener("resize", onViewportChange);
@@ -143,9 +149,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               <ChatMessageBubble
                 key={m.id}
                 message={m}
-                conversationId={id}
                 isOwn={m.sender_id === userId}
                 senderLabel={m.sender_id !== userId ? peerSenderLabel : undefined}
+                editMessage={editMessage}
+                deleteMessage={deleteMessage}
               />
             )
           )}

@@ -2,10 +2,21 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import type { RealtimeChannel } from "@supabase/supabase-js";
+import type { RealtimeChannel, RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { resolveAuthSession } from "@/lib/auth/resolve-auth-session";
 import type { Message } from "@/types/database";
+import {
+  appendMessageToCache,
+  applyMessagesRealtimePayload,
+  MESSAGE_LIST_SELECT,
+  scheduleMessagingInboxRefresh,
+} from "./message-cache";
+import {
+  fetchConversationMessages,
+  fetchConversationPeer,
+  peerFromConversationsCache,
+} from "./prefetch-chat";
 import {
   fetchParticipantsByUserIds,
   type MessageParticipant,
@@ -125,8 +136,7 @@ export function useMessagingInboxRealtime() {
           "postgres_changes",
           { event: "*", schema: "public", table: "messages" },
           () => {
-            qc.invalidateQueries({ queryKey: ["conversations"] });
-            qc.invalidateQueries({ queryKey: ["unread-messages-count"] });
+            scheduleMessagingInboxRefresh(qc);
           }
         )
         .subscribe();
@@ -175,53 +185,19 @@ export function useUnreadMessageCount() {
   });
 }
 
-async function resolveOtherParticipantId(
-  supabase: ReturnType<typeof createClient>,
-  conversationId: string,
-  currentUserId: string
-): Promise<string | null> {
-  const { data: others } = await supabase
-    .from("conversation_participants")
-    .select("user_id")
-    .eq("conversation_id", conversationId)
-    .neq("user_id", currentUserId)
-    .limit(1)
-    .maybeSingle();
-
-  if (others?.user_id) return others.user_id;
-
-  const { data: senders } = await supabase
-    .from("messages")
-    .select("sender_id")
-    .eq("conversation_id", conversationId)
-    .neq("sender_id", currentUserId)
-    .order("created_at", { ascending: false })
-    .limit(1);
-
-  return senders?.[0]?.sender_id ?? null;
-}
+const markReadInFlight = new Map<string, Promise<void>>();
 
 export function useConversationPeer(conversationId: string) {
-  const supabase = createClient();
+  const qc = useQueryClient();
+  const cachedPeer = peerFromConversationsCache(qc, conversationId);
+
   return useQuery<MessageParticipant | null>({
     queryKey: ["conversation-peer", conversationId],
-    queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      const otherUserId = await resolveOtherParticipantId(
-        supabase,
-        conversationId,
-        user.id
-      );
-      if (!otherUserId) return null;
-
-      const map = await fetchParticipantsByUserIds(supabase, [otherUserId]);
-      return map.get(otherUserId) ?? null;
-    },
+    queryFn: () => fetchConversationPeer(qc, conversationId),
     enabled: !!conversationId,
+    initialData: cachedPeer ?? undefined,
+    initialDataUpdatedAt: cachedPeer ? Date.now() : undefined,
+    staleTime: 60_000,
   });
 }
 
@@ -232,23 +208,28 @@ export function useMarkConversationRead(conversationId: string) {
   useEffect(() => {
     if (!conversationId) return;
 
-    async function markRead() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+    const inFlight = markReadInFlight.get(conversationId);
+    if (inFlight) return;
+
+    const task = (async () => {
+      const session = await resolveAuthSession(qc);
+      if (!session) return;
 
       await supabase
         .from("conversation_participants")
         .update({ last_read_at: new Date().toISOString() })
         .eq("conversation_id", conversationId)
-        .eq("user_id", user.id);
+        .eq("user_id", session.userId);
 
-      qc.invalidateQueries({ queryKey: ["conversations"] });
-      qc.invalidateQueries({ queryKey: ["unread-messages-count"] });
-    }
+      scheduleMessagingInboxRefresh(qc);
+    })();
 
-    markRead();
+    markReadInFlight.set(conversationId, task);
+    void task.finally(() => {
+      if (markReadInFlight.get(conversationId) === task) {
+        markReadInFlight.delete(conversationId);
+      }
+    });
   }, [conversationId, supabase, qc]);
 }
 
@@ -258,15 +239,9 @@ export function useMessages(conversationId: string) {
 
   const query = useQuery({
     queryKey: ["messages", conversationId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true });
-      return (data ?? []) as Message[];
-    },
+    queryFn: () => fetchConversationMessages(conversationId),
     enabled: !!conversationId,
+    staleTime: 30_000,
   });
 
   useMarkConversationRead(conversationId);
@@ -283,22 +258,12 @@ export function useMessages(conversationId: string) {
           table: "messages",
           filter: `conversation_id=eq.${conversationId}`,
         },
-        async () => {
-          qc.invalidateQueries({ queryKey: ["messages", conversationId] });
-          qc.invalidateQueries({ queryKey: ["conversations"] });
-          qc.invalidateQueries({ queryKey: ["unread-messages-count"] });
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
-          if (user) {
-            await supabase
-              .from("conversation_participants")
-              .update({ last_read_at: new Date().toISOString() })
-              .eq("conversation_id", conversationId)
-              .eq("user_id", user.id);
-            qc.invalidateQueries({ queryKey: ["conversations"] });
-            qc.invalidateQueries({ queryKey: ["unread-messages-count"] });
-          }
+        (payload: RealtimePostgresChangesPayload<Message>) => {
+          qc.setQueryData<Message[]>(
+            ["messages", conversationId],
+            (current) => applyMessagesRealtimePayload(current, payload)
+          );
+          scheduleMessagingInboxRefresh(qc);
         }
       )
       .subscribe();
@@ -319,13 +284,18 @@ export function useSendMessage(conversationId: string) {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("messages").insert({
-        conversation_id: conversationId,
-        sender_id: user.id,
-        body,
-        type: "text",
-      });
+      const { data: inserted, error } = await supabase
+        .from("messages")
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          body,
+          type: "text",
+        })
+        .select(MESSAGE_LIST_SELECT)
+        .single();
       if (error) throw error;
+      if (!inserted) throw new Error("Message was not created");
       await supabase
         .from("conversations")
         .update({ updated_at: new Date().toISOString(), status: "active" })
@@ -352,11 +322,14 @@ export function useSendMessage(conversationId: string) {
           metadata: { conversation_id: conversationId, sender_id: user.id },
         });
       }
+
+      return inserted as Message;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["messages", conversationId] });
-      qc.invalidateQueries({ queryKey: ["conversations"] });
-      qc.invalidateQueries({ queryKey: ["unread-messages-count"] });
+    onSuccess: (message) => {
+      qc.setQueryData<Message[]>(["messages", conversationId], (current) =>
+        appendMessageToCache(current, message)
+      );
+      scheduleMessagingInboxRefresh(qc);
     },
   });
 }
@@ -400,8 +373,7 @@ export function useEditMessage(conversationId: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["messages", conversationId] });
-      qc.invalidateQueries({ queryKey: ["conversations"] });
-      qc.invalidateQueries({ queryKey: ["unread-messages-count"] });
+      scheduleMessagingInboxRefresh(qc);
     },
   });
 }
@@ -466,8 +438,7 @@ export function useDeleteMessage(conversationId: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["messages", conversationId] });
-      qc.invalidateQueries({ queryKey: ["conversations"] });
-      qc.invalidateQueries({ queryKey: ["unread-messages-count"] });
+      scheduleMessagingInboxRefresh(qc);
     },
   });
 }
