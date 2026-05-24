@@ -88,8 +88,8 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
       ) : null}
 
       <div className={coach.banner_url ? "px-4 pt-4 lg:px-6" : "px-4 pt-6 lg:px-6 lg:pt-8"}>
-        <div className="flex gap-4 lg:items-start lg:justify-between">
-          <div className="flex min-w-0 flex-1 gap-4 lg:gap-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex min-w-0 w-full flex-1 gap-4 lg:gap-6">
           {isOwn ? (
             <ProfilePhotoUpload
               userId={coach.user_id}
@@ -132,8 +132,8 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
           </div>
           </div>
           {!isOwn && isPlayerViewer ? (
-            <div className="mt-4 shrink-0 lg:mt-0 lg:max-w-xs">
-              <MessagePlayerButton playerId={coach.user_id} />
+            <div className="w-full shrink-0 lg:max-w-xs lg:self-start">
+              <MessagePlayerButton otherUserId={coach.user_id} layout="default" />
             </div>
           ) : null}
         </div>
