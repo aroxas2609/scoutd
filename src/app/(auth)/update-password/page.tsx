@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
 import { GlassCard } from "@/components/ui/glass-card";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
@@ -9,8 +9,11 @@ import { PageLoader } from "@/components/ui/page-loader";
 import { createClient } from "@/lib/supabase/client";
 import { getPostLoginRedirect } from "@/lib/auth/redirect-path";
 
-export default function UpdatePasswordPage() {
+const RECOVERY_FLAG = "scoutd-password-recovery";
+
+function UpdatePasswordInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [afterSuccess, setAfterSuccess] = useState("/search");
   const [status, setStatus] = useState<"loading" | "ready" | "unauthenticated">("loading");
 
@@ -18,6 +21,17 @@ export default function UpdatePasswordPage() {
     const supabase = createClient();
 
     async function establishSession() {
+      const code = searchParams.get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          setStatus("unauthenticated");
+          return;
+        }
+        sessionStorage.setItem(RECOVERY_FLAG, "1");
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+
       const hash = window.location.hash.replace(/^#/, "");
       if (hash) {
         const params = new URLSearchParams(hash);
@@ -29,6 +43,7 @@ export default function UpdatePasswordPage() {
             refresh_token: refreshToken,
           });
           if (!error) {
+            sessionStorage.setItem(RECOVERY_FLAG, "1");
             window.history.replaceState(null, "", window.location.pathname);
           }
         }
@@ -39,12 +54,17 @@ export default function UpdatePasswordPage() {
           data: { session },
         } = await supabase.auth.getSession();
         if (session) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("role, onboarding_complete")
-            .eq("id", session.user.id)
-            .single();
-          setAfterSuccess(getPostLoginRedirect(profile) ?? "/search");
+          const inRecovery = sessionStorage.getItem(RECOVERY_FLAG) === "1";
+          if (inRecovery) {
+            setAfterSuccess("/search");
+          } else {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("role, onboarding_complete")
+              .eq("id", session.user.id)
+              .single();
+            setAfterSuccess(getPostLoginRedirect(profile) ?? "/search");
+          }
           setStatus("ready");
           return;
         }
@@ -55,7 +75,7 @@ export default function UpdatePasswordPage() {
     }
 
     void establishSession();
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -83,9 +103,26 @@ export default function UpdatePasswordPage() {
           Choose a new password for your account.
         </p>
         <div className="mt-6">
-          <ChangePasswordForm redirectOnSuccess={afterSuccess} />
+          <ChangePasswordForm
+            redirectOnSuccess={afterSuccess}
+            onSuccess={() => sessionStorage.removeItem(RECOVERY_FLAG)}
+          />
         </div>
       </GlassCard>
     </AuthPageShell>
+  );
+}
+
+export default function UpdatePasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthPageShell>
+          <PageLoader />
+        </AuthPageShell>
+      }
+    >
+      <UpdatePasswordInner />
+    </Suspense>
   );
 }

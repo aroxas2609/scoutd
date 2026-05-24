@@ -51,9 +51,9 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 | Setting | Production value |
 |---------|------------------|
 | **Site URL** | `https://your-production-domain` (must **not** be `http://localhost:3000` or emails will link to localhost) |
-| **Redirect URLs** | `https://your-production-domain/auth/callback` and `https://your-production-domain/auth/callback**` |
+| **Redirect URLs** | `https://your-production-domain/auth/callback**`, `https://your-production-domain/update-password**` |
 
-For local dev on the same Supabase project, add `http://localhost:3000/auth/callback` to **Redirect URLs** only — keep **Site URL** on production.
+For local dev on the same Supabase project, add `http://localhost:3000/auth/callback**` and `http://localhost:3000/update-password**` to **Redirect URLs** only — keep **Site URL** on production.
 
 In Vercel env (Production): set `NEXT_PUBLIC_APP_URL` and optionally `APP_URL` to the same `https://…` origin (no trailing slash), then redeploy. Request a **new** reset email after changing Supabase or env vars.
 

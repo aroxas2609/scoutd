@@ -12,6 +12,13 @@ function resolveCallbackTarget(searchParams: URLSearchParams) {
   const type = searchParams.get("type");
   if (type === "recovery") return "/update-password";
 
+  if (typeof window !== "undefined") {
+    const hashType = new URLSearchParams(window.location.hash.replace(/^#/, "")).get(
+      "type"
+    );
+    if (hashType === "recovery") return "/update-password";
+  }
+
   return "/role";
 }
 
@@ -66,6 +73,10 @@ function AuthCallbackInner() {
             return;
           }
         }
+      }
+
+      if (target === "/update-password") {
+        sessionStorage.setItem("scoutd-password-recovery", "1");
       }
 
       // Full navigation so cookies are visible to the next page (avoids login redirect loop).

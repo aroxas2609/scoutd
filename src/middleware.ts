@@ -57,6 +57,13 @@ export async function middleware(request: NextRequest) {
       }
       // Sign-in link should show the login form, not role selection (e.g. stale session, no role yet).
       if (path === "/login") {
+        const redirectParam = request.nextUrl.searchParams.get("redirect");
+        if (redirectParam === "/update-password" && user) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/update-password";
+          url.search = "";
+          return NextResponse.redirect(url);
+        }
         if (!setupTarget) {
           const url = request.nextUrl.clone();
           url.pathname = "/search";

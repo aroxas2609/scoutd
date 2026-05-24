@@ -12,12 +12,14 @@ import { cn } from "@/lib/utils";
 type ChangePasswordFormProps = {
   /** After reset via email link, send user into the app */
   redirectOnSuccess?: string;
+  onSuccess?: () => void;
   className?: string;
   compact?: boolean;
 };
 
 export function ChangePasswordForm({
   redirectOnSuccess,
+  onSuccess,
   className,
   compact,
 }: ChangePasswordFormProps) {
@@ -35,6 +37,7 @@ export function ChangePasswordForm({
         return;
       }
       toast.success("Password updated");
+      onSuccess?.();
       if (redirectOnSuccess) {
         router.push(redirectOnSuccess);
         router.refresh();
