@@ -43,7 +43,9 @@ export default function RolePage() {
               </div>
               <div>
                 <h2 className="font-display text-lg font-semibold">Player</h2>
-                <p className="text-sm text-muted-foreground">Get discovered by coaches worldwide</p>
+                <p className="text-sm text-muted-foreground">
+                  Build your profile and get discovered by coaches in your area
+                </p>
               </div>
             </GlassCard>
           </button>

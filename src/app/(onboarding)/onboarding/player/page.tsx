@@ -93,8 +93,9 @@ export default function PlayerOnboardingPage() {
       </p>
       <h1 className="font-display mt-2 text-2xl font-bold">{STEPS[step]}</h1>
       <Progress value={progress} className="mt-4 h-1" />
-      <GlassCard className="mt-8 p-6">
+      <GlassCard className="mt-8 overflow-hidden p-6">
         <form
+          className="min-w-0"
           onSubmit={(e) => {
             e.preventDefault();
           }}
@@ -110,7 +111,7 @@ export default function PlayerOnboardingPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
+              className="min-w-0 space-y-4"
             >
               {step === 0 && (
                 <>

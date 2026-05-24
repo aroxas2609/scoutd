@@ -19,7 +19,7 @@ export function OnboardingField({
   className?: string;
 }) {
   return (
-    <div className={cn("space-y-1.5", className)}>
+    <div className={cn("min-w-0 space-y-1.5", className)}>
       <div className="flex items-center justify-between gap-2">
         <Label>{label}</Label>
         {labelExtra}
