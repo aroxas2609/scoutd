@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { clearAuthQueries } from "./auth-query-cache";
 
-/** Single auth listener — clears React Query when Supabase session changes. */
+/** Single auth listener — clears React Query when the session ends. */
 export function AuthQuerySync() {
   const supabase = createClient();
   const qc = useQueryClient();
@@ -14,7 +14,8 @@ export function AuthQuerySync() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+      // SIGNED_IN is handled by login-form seeding; clearing there caused a second cold fetch.
+      if (event === "SIGNED_OUT") {
         clearAuthQueries(qc);
       }
     });

@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { clearAuthQueries } from "@/features/auth/auth-query-cache";
+import {
+  clearAuthQueries,
+  seedAuthQueries,
+} from "@/features/auth/auth-query-cache";
+import type { UserRole } from "@/types/database";
 import { getPostLoginRedirect } from "@/lib/auth/redirect-path";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,10 +34,11 @@ export function LoginForm() {
     clearAuthQueries(qc);
     const supabase = createClient();
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data: signInData, error: signInError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
     if (signInError) {
       setError(signInError.message);
@@ -41,10 +46,7 @@ export function LoginForm() {
       return;
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
+    const user = signInData.user;
     if (!user) {
       setError("Sign in failed. Try again.");
       setPending(false);
@@ -57,12 +59,15 @@ export function LoginForm() {
       .eq("id", user.id)
       .single();
 
-    clearAuthQueries(qc);
+    seedAuthQueries(qc, {
+      userId: user.id,
+      role: (profile?.role as UserRole | null) ?? null,
+    });
+
     const redirect = searchParams.get("redirect");
     const destination =
       redirect?.startsWith("/") ? redirect : getPostLoginRedirect(profile);
     router.push(destination);
-    router.refresh();
   }
 
   return (
