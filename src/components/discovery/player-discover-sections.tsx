@@ -77,7 +77,7 @@ export function PlayerDiscoverSections({
       ) : null}
       {trendingList.length > 0 ? (
         <section>
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/90 lg:text-xs lg:font-medium lg:tracking-wider lg:text-muted-foreground">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-secondary lg:text-xs lg:font-medium lg:tracking-wider lg:text-muted-foreground">
             Trending
           </h2>
           <div className="mt-3.5 grid gap-4 sm:grid-cols-2 lg:mt-3 lg:gap-3 lg:grid-cols-2 xl:grid-cols-3">
@@ -89,7 +89,7 @@ export function PlayerDiscoverSections({
       ) : null}
       {showNearby ? (
         <section>
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/90 lg:text-xs lg:font-medium lg:tracking-wider lg:text-muted-foreground">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-secondary lg:text-xs lg:font-medium lg:tracking-wider lg:text-muted-foreground">
             Nearby
           </h2>
           <div className="-mx-4 mt-3.5 flex gap-3.5 overflow-x-auto px-4 hide-scrollbar lg:mx-0 lg:mt-3 lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:px-0 xl:grid-cols-4">
@@ -101,7 +101,7 @@ export function PlayerDiscoverSections({
       ) : null}
       {activeList.length > 0 ? (
         <section>
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/90 lg:text-xs lg:font-medium lg:tracking-wider lg:text-muted-foreground">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-secondary lg:text-xs lg:font-medium lg:tracking-wider lg:text-muted-foreground">
             Recently active
           </h2>
           <div className="mt-3.5 grid gap-4 sm:grid-cols-2 lg:mt-3 lg:gap-3 lg:grid-cols-2 xl:grid-cols-3">

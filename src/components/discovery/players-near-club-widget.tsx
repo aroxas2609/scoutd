@@ -50,7 +50,7 @@ export function PlayersNearClubWidget({ onSearchNearby }: PlayersNearClubWidgetP
     <section className="mb-10 lg:mb-8">
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/90 lg:text-xs lg:font-medium lg:tracking-wider lg:text-muted-foreground">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-secondary lg:text-xs lg:font-medium lg:tracking-wider lg:text-muted-foreground">
             Near your club
           </h2>
           {origin ? (

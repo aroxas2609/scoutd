@@ -27,7 +27,7 @@ export function DiscoverFilterChips({
           "lg:px-3.5 lg:py-1.5 lg:text-xs lg:font-semibold",
           myDistrict
             ? "border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/12 text-foreground lg:border-[var(--accent-brand)]/50 lg:bg-[var(--accent-brand)]/15"
-            : "border-white/[0.08] bg-white/[0.03] text-muted-foreground/80 hover:border-white/15 hover:text-foreground lg:border-white/10 lg:bg-white/[0.04] lg:text-muted-foreground lg:hover:border-white/20"
+            : "border-white/[0.08] bg-white/[0.03] text-muted-foreground hover:border-white/15 hover:text-foreground lg:border-white/10 lg:bg-white/[0.04] lg:hover:border-white/20"
         )}
         aria-pressed={myDistrict}
       >
@@ -42,7 +42,7 @@ export function DiscoverFilterChips({
             "lg:px-3.5 lg:py-1.5 lg:text-xs lg:font-semibold",
             nearbyEnabled
               ? "border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/12 text-foreground lg:border-[var(--accent-brand)]/50 lg:bg-[var(--accent-brand)]/15"
-              : "border-white/[0.08] bg-white/[0.03] text-muted-foreground/80 hover:border-white/15 hover:text-foreground lg:border-white/10 lg:bg-white/[0.04] lg:text-muted-foreground lg:hover:border-white/20"
+              : "border-white/[0.08] bg-white/[0.03] text-muted-foreground hover:border-white/15 hover:text-foreground lg:border-white/10 lg:bg-white/[0.04] lg:hover:border-white/20"
           )}
           aria-pressed={nearbyEnabled}
         >

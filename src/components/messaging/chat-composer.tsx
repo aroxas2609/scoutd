@@ -24,7 +24,7 @@ export function ChatComposer({ value, onChange, onSubmit, disabled }: ChatCompos
         <button
           type="submit"
           disabled={disabled || !value.trim()}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-900 disabled:opacity-40"
+          className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-xl bg-[var(--accent-brand)] text-[var(--primary-foreground)] transition-colors hover:bg-[var(--accent-brand-muted)] disabled:opacity-40"
         >
           <Send className="h-4 w-4" />
         </button>

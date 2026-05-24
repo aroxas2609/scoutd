@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { LogoLink } from "@/components/brand/logo-link";
 import { cn } from "@/lib/utils";
 
 type AuthPageShellProps = {
@@ -17,13 +17,8 @@ export function AuthPageShell({
 }: AuthPageShellProps) {
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
-      <header className="shrink-0">
-        <Link
-          href="/"
-          className="inline-block font-display text-2xl font-bold tracking-tight"
-        >
-          Scoutd
-        </Link>
+      <header className="flex shrink-0 justify-center pb-4">
+        <LogoLink href="/" variant="full" size="lg" />
       </header>
       <main
         className={cn(

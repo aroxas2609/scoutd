@@ -81,7 +81,7 @@ function PlayerCardInner({ player, distanceKm, onSave, saved, compact }: PlayerC
             />
           ) : (
             <div className="flex h-full items-center justify-center">
-              <User className="h-12 w-12 text-white/15" />
+              <User className="h-12 w-12 text-muted-foreground" />
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-deep)] from-[6%] via-[var(--bg-deep)]/75 via-[48%] to-black/15 lg:from-[var(--bg-deep)] lg:via-[var(--bg-deep)]/20 lg:to-transparent" />

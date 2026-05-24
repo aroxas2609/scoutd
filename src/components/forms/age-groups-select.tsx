@@ -94,7 +94,7 @@ function AgeGroupsToolbar({
         type="button"
         onClick={onDone}
         className={cn(
-          "rounded-lg bg-white font-medium text-zinc-900",
+          "rounded-lg bg-[var(--accent-brand)] font-medium text-[var(--primary-foreground)]",
           isDesktop ? "ml-auto px-3 py-1 text-xs" : "px-4 py-2 text-sm"
         )}
       >

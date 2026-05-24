@@ -54,14 +54,14 @@ export function BottomTabBar({
               className={cn(
                 "relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-2.5 font-medium transition-colors",
                 compact ? "text-[10px]" : "text-[11px]",
-                active ? "text-foreground" : "text-muted-foreground/55"
+                active ? "text-[var(--accent-brand)]" : "text-muted-foreground"
               )}
             >
               <span
                 className={cn(
                   "relative flex h-9 w-9 items-center justify-center rounded-xl transition-all",
                   active &&
-                    "bg-white/[0.1] shadow-[0_0_16px_rgba(255,255,255,0.06)] ring-1 ring-white/[0.08]"
+                    "bg-[var(--accent-brand)]/12 ring-1 ring-[var(--accent-brand)]/25"
                 )}
               >
                 <Icon

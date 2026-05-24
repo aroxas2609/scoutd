@@ -93,8 +93,8 @@ export function TrialInviteCard({ message }: { message: Message }) {
             <span
               className={cn(
                 "rounded-lg px-2 py-0.5 text-xs capitalize",
-                status === "accepted" && "bg-emerald-500/10 text-emerald-300",
-                status === "declined" && "bg-red-500/10 text-red-300",
+                status === "accepted" && "bg-[var(--success)]/15 text-[#a7f3d0]",
+                status === "declined" && "bg-[var(--destructive)]/15 text-[#ffb3c1]",
                 status === "maybe" && "bg-amber-500/10 text-amber-200",
                 status === "pending" && "bg-white/[0.06] text-muted-foreground"
               )}

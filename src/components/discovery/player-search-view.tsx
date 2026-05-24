@@ -280,7 +280,7 @@ export function PlayerSearchView() {
         <button
           type="button"
           onClick={() => setSwipeMode(!swipeMode)}
-          className="fixed bottom-28 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-zinc-900 shadow-lg lg:bottom-8 lg:right-8"
+          className="fixed bottom-28 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-brand)] text-[var(--primary-foreground)] shadow-lg lg:bottom-8 lg:right-8"
           aria-label={swipeMode ? "Show browse lists" : "Swipe to scout"}
         >
           <Layers className="h-6 w-6" />

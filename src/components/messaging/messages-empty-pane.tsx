@@ -1,8 +1,12 @@
 import { MessageCircle } from "lucide-react";
+import { Logo } from "@/components/brand/logo";
 
 export function MessagesEmptyPane() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-8 py-16 text-center">
+      <div className="mb-3">
+        <Logo variant="icon" size="md" />
+      </div>
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.06]">
         <MessageCircle className="h-7 w-7 text-[var(--accent-brand)]" />
       </div>

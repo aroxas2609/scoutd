@@ -98,7 +98,7 @@ export function TrialInviteDialog({
         className={cn(
           isProfile
             ? profileActionClass("primary")
-            : "flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-medium text-zinc-900 transition-colors hover:bg-white/90 active:scale-[0.99]"
+            : "flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--accent-brand)] px-4 text-sm font-medium text-[var(--primary-foreground)] transition-colors hover:bg-[var(--accent-brand-muted)] active:scale-[0.99]"
         )}
       >
         <Calendar className={cn(isProfile ? "h-[18px] w-[18px]" : "h-4 w-4")} />

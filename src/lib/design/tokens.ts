@@ -1,11 +1,15 @@
 export const colors = {
-  deep: "#0A0A0B",
-  graphite: "#141416",
-  elevated: "#1C1C1F",
-  electric: "#39FF14",
-  neon: "#00E5FF",
-  white: "#FAFAFA",
-  muted: "#8A8A8E",
+  deep: "#0B1020",
+  surface: "#121A2B",
+  graphite: "#151D30",
+  elevated: "#182238",
+  teal: "#00E0B8",
+  blue: "#4DA3FF",
+  white: "#FFFFFF",
+  secondary: "#A9B4C7",
+  muted: "#7F8BA3",
+  success: "#22C55E",
+  danger: "#FF5C7A",
 } as const;
 
 export const radii = {

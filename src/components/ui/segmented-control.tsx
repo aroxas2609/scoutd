@@ -43,8 +43,8 @@ export function SegmentedControl<T extends string>({
             className={cn(
               "flex-1 rounded-lg py-2 text-sm font-medium transition-colors",
               active
-                ? "bg-white text-zinc-900 shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-[var(--accent-brand)] text-[var(--primary-foreground)] shadow-sm"
+                : "text-muted-foreground hover:text-[var(--text-secondary)]"
             )}
           >
             {segment.label}

@@ -74,7 +74,7 @@ function CoachCardInner({ coach, compact }: CoachCardProps) {
               <p className="mt-1 line-clamp-2 text-xs leading-snug text-muted-foreground">
                 {coach.league ? <span>{coach.league}</span> : null}
                 {coach.league && coach.location ? (
-                  <span className="text-white/20"> · </span>
+                  <span className="text-muted-foreground"> · </span>
                 ) : null}
                 {coach.location ? (
                   <span className="inline-flex items-center gap-0.5">

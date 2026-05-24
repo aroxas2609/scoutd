@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/brand/logo";
 
 const links = [
   { href: "/admin", label: "Overview" },
@@ -33,8 +34,9 @@ export default async function AdminLayout({
   return (
     <div className="min-h-dvh bg-[var(--bg-deep)]">
       <header className="border-b border-white/10 px-6 py-4 lg:hidden">
-        <Link href="/admin" className="font-display text-xl font-bold text-[var(--accent-electric)]">
-          Scoutd Admin
+        <Link href="/admin" className="flex items-center gap-2">
+          <Logo variant="icon" size="sm" />
+          <span className="font-display text-xl font-bold text-[var(--accent-electric)]">Admin</span>
         </Link>
         <nav className="mt-4 flex flex-wrap gap-4 text-sm">
           {links.map((l) => (
@@ -47,11 +49,9 @@ export default async function AdminLayout({
 
       <div className="lg:flex">
         <aside className="hidden lg:flex lg:w-56 lg:shrink-0 lg:flex-col lg:border-r lg:border-white/10 lg:px-4 lg:py-6">
-          <Link
-            href="/admin"
-            className="font-display text-lg font-bold text-[var(--accent-brand)]"
-          >
-            Scoutd Admin
+          <Link href="/admin" className="flex items-center gap-2">
+            <Logo variant="icon" size="sm" />
+            <span className="font-display text-lg font-bold text-[var(--accent-brand)]">Admin</span>
           </Link>
           <nav className="mt-8 flex flex-col gap-1">
             {links.map((l) => (

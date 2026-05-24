@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
 import { PremiumButton } from "@/components/ui/premium-button";
+import { LogoLink } from "@/components/brand/logo-link";
 import {
   Search,
   MessageCircle,
@@ -181,7 +182,7 @@ export function MarketingFooter() {
   return (
     <footer className="border-t border-white/5 py-12">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-6 sm:flex-row">
-        <p className="font-display text-lg font-bold">Scoutd</p>
+        <LogoLink href="/" variant="full" size="sm" />
         <p className="text-sm text-muted-foreground">Find Your Next Player. © {new Date().getFullYear()}</p>
         <div className="flex gap-6 text-sm text-muted-foreground">
           <Link href="/login">Login</Link>
@@ -196,9 +197,7 @@ export function MarketingHeader() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[var(--bg-deep)]/80 backdrop-blur-2xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="font-display text-xl font-bold">
-          Scoutd
-        </Link>
+        <LogoLink href="/" variant="full" size="md" />
         <div className="flex items-center gap-4">
           <Link href="/login" className="text-sm text-muted-foreground hover:text-white">
             Sign in

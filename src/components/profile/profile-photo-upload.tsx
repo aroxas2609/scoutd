@@ -113,7 +113,7 @@ export function ProfilePhotoUpload({
           <Image src={preview} alt="Profile" fill unoptimized className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <User className="h-10 w-10 text-white/25" />
+            <User className="h-10 w-10 text-muted-foreground" />
           </div>
         )}
         <span className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">

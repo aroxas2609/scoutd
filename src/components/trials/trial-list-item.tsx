@@ -79,8 +79,8 @@ export function TrialListItem({ trial, inboxFilter, isPlayerViewer }: Props) {
         <span
           className={cn(
             "rounded-lg px-2 py-0.5 text-xs font-medium capitalize",
-            trial.status === "accepted" && "bg-emerald-500/10 text-emerald-300",
-            trial.status === "declined" && "bg-red-500/10 text-red-300",
+            trial.status === "accepted" && "bg-[var(--success)]/15 text-[#a7f3d0]",
+            trial.status === "declined" && "bg-[var(--destructive)]/15 text-[#ffb3c1]",
             trial.status === "maybe" && "bg-amber-500/10 text-amber-200",
             trial.status === "pending" && "bg-white/[0.06] text-muted-foreground"
           )}

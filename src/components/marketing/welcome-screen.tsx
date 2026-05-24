@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Calendar, MapPin, MessageCircle, Search } from "lucide-react";
 import { PremiumButton } from "@/components/ui/premium-button";
+import { LogoLink } from "@/components/brand/logo-link";
 
 const highlights = [
   {
@@ -26,7 +27,7 @@ export function WelcomeScreen() {
   return (
     <div className="mx-auto flex h-dvh max-h-dvh w-full max-w-lg flex-col overflow-hidden bg-[var(--bg-deep)] text-foreground">
       <header className="flex shrink-0 items-center justify-between px-5 pb-2 pt-[max(1rem,env(safe-area-inset-top))]">
-        <span className="text-lg font-semibold tracking-tight">Scoutd</span>
+        <LogoLink href="/" variant="full" size="sm" />
         <Link
           href="/login"
           className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"

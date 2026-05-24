@@ -20,7 +20,7 @@ export function PremiumButton({
         "h-9 rounded-xl px-4 text-sm font-medium active:scale-[0.99]",
         isOutline
           ? "border border-white/20 bg-transparent text-foreground hover:bg-white/[0.06] hover:text-foreground"
-          : "bg-white text-zinc-900 hover:bg-white/90",
+          : "bg-[var(--accent-brand)] text-[var(--primary-foreground)] hover:bg-[var(--accent-brand-muted)]",
         className
       )}
       {...props}
