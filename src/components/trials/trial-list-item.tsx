@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Archive, ArchiveRestore, Calendar, MapPin, MoreHorizontal, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 import { PremiumButton } from "@/components/ui/premium-button";
@@ -29,6 +30,7 @@ type Props = {
 };
 
 export function TrialListItem({ trial, inboxFilter, isPlayerViewer }: Props) {
+  const pathname = usePathname();
   const updateStatus = useUpdateTrialStatus();
   const archiveTrial = useArchiveTrialInvite();
   const deleteTrial = useDeleteTrialInvite();
@@ -154,7 +156,7 @@ export function TrialListItem({ trial, inboxFilter, isPlayerViewer }: Props) {
       </div>
 
       <Link
-        href={profilePathFor(trial.counterpartyRole, trial.counterpartyId)}
+        href={profilePathFor(trial.counterpartyRole, trial.counterpartyId, pathname)}
         className="mt-3 flex items-center gap-2 rounded-lg transition-colors hover:bg-white/[0.04]"
       >
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-[var(--bg-elevated)]">

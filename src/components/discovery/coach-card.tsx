@@ -2,6 +2,8 @@
 
 import { memo } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { profileUrl } from "@/lib/navigation/profile-return-path";
 import Image from "next/image";
 import { Building2, MapPin } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -17,13 +19,17 @@ interface CoachCardProps {
 }
 
 function CoachCardInner({ coach, compact }: CoachCardProps) {
+  const pathname = usePathname();
   const { primary, secondary } = coachProfileHeading(coach);
   const logo = coach.logo_url ?? coach.profiles?.avatar_url;
   const preview = coach.recruiting_needs?.trim();
   const ageCodes = sortAgeGroupCodes(coach.age_groups ?? []).slice(0, compact ? 4 : 6);
 
   return (
-    <Link href={`/profile/coach/${coach.user_id}`} className="block">
+    <Link
+      href={profileUrl(`/profile/coach/${coach.user_id}`, pathname)}
+      className="block"
+    >
       <GlassCard
         className={cn(
           "overflow-hidden p-3 transition-colors hover:border-white/[0.14]",

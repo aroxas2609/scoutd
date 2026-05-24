@@ -38,9 +38,10 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ id: st
   const isOwn = viewer?.userId === id;
 
   useEffect(() => {
+    const viewerId = viewer?.userId;
+    if (!viewerId || viewerId === id) return;
+
     async function trackView() {
-      const viewerId = viewer?.userId;
-      if (!viewerId || viewerId === id) return;
       const supabase = createClient();
       await supabase.from("profile_views").insert({ viewer_id: viewerId, viewed_id: id });
       await supabase.from("notifications").insert({
@@ -51,9 +52,18 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ id: st
         metadata: { viewer_id: viewerId },
       });
     }
-    if (viewer?.userId) {
-      trackView();
+
+    const run = () => {
+      void trackView();
+    };
+
+    if (typeof requestIdleCallback === "function") {
+      const idleId = requestIdleCallback(run, { timeout: 5000 });
+      return () => cancelIdleCallback(idleId);
     }
+
+    const timeoutId = window.setTimeout(run, 500);
+    return () => window.clearTimeout(timeoutId);
   }, [id, viewer?.userId]);
 
   if (isLoading && !player) return <PlayerProfileSkeleton />;

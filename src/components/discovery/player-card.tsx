@@ -2,7 +2,11 @@
 
 import { memo, useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { profileUrl } from "@/lib/navigation/profile-return-path";
+import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
+import { prefetchPlayerProfile } from "@/features/players/prefetch-player-profile";
 import { Bookmark, MapPin, Play, User } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { AvailabilityBadge } from "@/components/ui/availability-badge";
@@ -19,6 +23,16 @@ interface PlayerCardProps {
 }
 
 function PlayerCardInner({ player, distanceKm, onSave, saved, compact }: PlayerCardProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const qc = useQueryClient();
+  const profileHref = profileUrl(`/profile/player/${player.user_id}`, pathname);
+
+  function warmProfile() {
+    router.prefetch(profileHref);
+    prefetchPlayerProfile(qc, player.user_id);
+  }
+
   const name = player.profiles?.full_name ?? "Player";
   const avatar = player.profiles?.avatar_url;
   const [avatarError, setAvatarError] = useState(false);
@@ -40,7 +54,13 @@ function PlayerCardInner({ player, distanceKm, onSave, saved, compact }: PlayerC
     distanceKm != null || player.has_highlights || availability != null;
 
   return (
-    <Link href={`/profile/player/${player.user_id}`} className="block">
+    <Link
+      href={profileHref}
+      prefetch
+      onTouchStart={warmProfile}
+      onMouseEnter={warmProfile}
+      className="block"
+    >
       <GlassCard
         className={cn(
           "overflow-hidden border-white/[0.06] shadow-[0_12px_40px_-16px_rgba(0,0,0,0.75)] ring-1 ring-white/[0.04] transition-colors",

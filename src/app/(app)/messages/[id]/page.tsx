@@ -69,8 +69,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     .join("")
     .slice(0, 2)
     .toUpperCase();
-  const peerHref =
-    peer?.id ? profilePathFor(peer.role, peer.id) : null;
+  const peerHref = peer?.id
+    ? profilePathFor(peer.role, peer.id, `/messages/${id}`)
+    : null;
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();

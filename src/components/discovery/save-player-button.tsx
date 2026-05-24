@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Bookmark } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { resolveAuthSession } from "@/lib/auth/resolve-auth-session";
 import { profileActionClass } from "@/components/profile/player-profile-action-styles";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import type { PlayerProfile } from "@/types/database";
 
 type SavePlayerButtonProps = {
   playerId: string;
@@ -16,60 +19,67 @@ export function SavePlayerButton({
   playerId,
   layout = "default",
 }: SavePlayerButtonProps) {
+  const qc = useQueryClient();
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     async function check() {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+      const session = await resolveAuthSession(qc);
+      if (!session) {
         setLoading(false);
         return;
       }
+
+      const shortlist = qc.getQueryData<PlayerProfile[]>(["shortlist"]);
+      if (shortlist) {
+        setSaved(shortlist.some((p) => p.user_id === playerId));
+        setLoading(false);
+        return;
+      }
+
+      const supabase = createClient();
       const { data } = await supabase
         .from("saved_players")
         .select("player_id")
-        .eq("coach_id", user.id)
+        .eq("coach_id", session.userId)
         .eq("player_id", playerId)
         .maybeSingle();
       setSaved(!!data);
       setLoading(false);
     }
     void check();
-  }, [playerId]);
+  }, [playerId, qc]);
 
   async function toggle() {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
+    const session = await resolveAuthSession(qc);
+    if (!session) return;
 
+    const supabase = createClient();
     setBusy(true);
     if (saved) {
       const { error } = await supabase
         .from("saved_players")
         .delete()
-        .eq("coach_id", user.id)
+        .eq("coach_id", session.userId)
         .eq("player_id", playerId);
       if (error) toast.error("Could not remove from shortlist");
       else {
         setSaved(false);
         toast.success("Removed from shortlist");
+        void qc.invalidateQueries({ queryKey: ["shortlist"] });
       }
     } else {
       const { error } = await supabase.from("saved_players").upsert({
-        coach_id: user.id,
+        coach_id: session.userId,
         player_id: playerId,
       });
       if (error) toast.error("Could not save player");
       else {
         setSaved(true);
         toast.success("Saved to shortlist");
+        void qc.invalidateQueries({ queryKey: ["shortlist"] });
       }
     }
     setBusy(false);

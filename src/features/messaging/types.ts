@@ -1,3 +1,4 @@
+import { profileUrl } from "@/lib/navigation/profile-return-path";
 import type { Conversation, Message } from "@/types/database";
 import type { MessageParticipant } from "./participant-display";
 import type { UserRole } from "@/types/database";
@@ -11,9 +12,14 @@ export type ConversationPreview = {
   unread_count: number;
 };
 
-export function profilePathFor(role: UserRole | null, userId: string) {
-  if (role === "coach") return `/profile/coach/${userId}`;
-  return `/profile/player/${userId}`;
+export function profilePathFor(
+  role: UserRole | null,
+  userId: string,
+  returnTo?: string | null
+) {
+  const base =
+    role === "coach" ? `/profile/coach/${userId}` : `/profile/player/${userId}`;
+  return profileUrl(base, returnTo);
 }
 
 export function messagePreview(

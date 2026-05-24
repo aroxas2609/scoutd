@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { navigateProfileBack } from "@/lib/navigation/navigate-profile-back";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VerificationBadge } from "@/components/ui/verification-badge";
 import { AvailabilityBadge } from "@/components/ui/availability-badge";
@@ -85,6 +86,7 @@ function PlayerAccountSettings({
 
 export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileViewProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const isCoachViewer = viewerRole === "coach";
   const name = player.profiles?.full_name ?? "Player";
   const availability = (player.availability ?? "available") as AvailabilityStatus;
@@ -120,8 +122,10 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
       <div className="sticky top-0 z-20 flex items-center justify-between border-b border-white/[0.06] bg-[var(--bg-deep)]/90 px-4 py-3 backdrop-blur-md lg:px-6">
         <button
           type="button"
-          onClick={() => router.back()}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-[var(--bg-surface)]"
+          onClick={() =>
+            navigateProfileBack(router, { currentPath: pathname, fallback: "/search" })
+          }
+          className="flex h-11 w-11 min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-xl border border-white/[0.08] bg-[var(--bg-surface)] active:scale-[0.98]"
           aria-label="Go back"
         >
           <ArrowLeft className="h-4 w-4" />

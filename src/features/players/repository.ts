@@ -32,7 +32,7 @@ const PLAYER_LIST_SELECT = `
 
 const PLAYER_DETAIL_SELECT = `
   *,
-  profiles!inner(*),
+  profiles!inner(id, full_name, avatar_url, last_active_at, email),
   associations(name)
 `;
 
