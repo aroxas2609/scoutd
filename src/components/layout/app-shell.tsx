@@ -24,7 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     void qc
-      .prefetchQuery({ queryKey: AUTH_USER_ID_KEY, queryFn: fetchAuthUserId })
+      .ensureQueryData({ queryKey: AUTH_USER_ID_KEY, queryFn: fetchAuthUserId })
       .then((userId) => {
         if (userId) {
           void qc.prefetchQuery({
