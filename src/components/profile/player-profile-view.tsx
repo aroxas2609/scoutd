@@ -20,6 +20,7 @@ import {
   Briefcase,
   Plane,
   Landmark,
+  Hash,
 } from "lucide-react";
 import { ProfileDetailLinkRow } from "@/components/profile/profile-detail-link-row";
 import {
@@ -28,6 +29,7 @@ import {
   playerHasContactDetails,
   telHref,
 } from "@/features/profile/player-contact";
+import { playerFfaNumber } from "@/features/profile/player-private-fields";
 import { PlayerProfileCoachActions } from "@/components/profile/player-profile-coach-actions";
 import { PlayerProfilePlayerActions } from "@/components/profile/player-profile-player-actions";
 import { ChangePasswordSection } from "@/components/auth/change-password-section";
@@ -114,6 +116,7 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
   const showContactToCoach = !isOwn && isCoachViewer;
   const contactEmail = showContactToCoach ? playerContactEmail(player) : null;
   const contactPhone = showContactToCoach ? playerContactPhone(player) : null;
+  const ffaNumber = showContactToCoach ? playerFfaNumber(player) : null;
 
   return (
     <div
@@ -264,7 +267,10 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
                       value={contactPhone}
                     />
                   ) : null}
-                  {!playerHasContactDetails(player) ? (
+                  {ffaNumber ? (
+                    <ProfileDetailRow icon={Hash} label="FFA#" value={ffaNumber} />
+                  ) : null}
+                  {!playerHasContactDetails(player) && !ffaNumber ? (
                     <p className="py-3 text-sm text-muted-foreground">
                       This player has not added contact details yet. Send a message to get in
                       touch.

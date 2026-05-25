@@ -58,6 +58,11 @@ export const playerOnboardingSchema = z.object({
     }),
   contactEmail: optionalEmail,
   contactPhone: z.string().trim().optional(),
+  ffaNumber: z
+    .string()
+    .trim()
+    .max(32, "FFA number is too long")
+    .optional(),
 });
 
 export const coachOnboardingSchema = z.object({

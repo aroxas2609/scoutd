@@ -48,6 +48,7 @@ export function playerProfileToForm(player: PlayerProfile): PlayerOnboardingInpu
     associationId: player.association_id ?? undefined,
     contactEmail: player.contact_email ?? undefined,
     contactPhone: player.contact_phone ?? undefined,
+    ffaNumber: player.ffa_number ?? undefined,
   };
 }
 

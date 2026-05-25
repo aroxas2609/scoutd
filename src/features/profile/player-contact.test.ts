@@ -41,6 +41,7 @@ function minimalPlayer(
     association_id: null,
     contact_email: null,
     contact_phone: null,
+    ffa_number: null,
     ...overrides,
   };
 }

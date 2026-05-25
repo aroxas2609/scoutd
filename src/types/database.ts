@@ -106,6 +106,8 @@ export interface PlayerProfile {
   association_id: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  /** FFA registration number; visible to coaches only. */
+  ffa_number: string | null;
   associations?: { name: string } | null;
   profiles?: Profile;
 }

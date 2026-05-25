@@ -342,6 +342,17 @@ export default function PlayerOnboardingPage() {
                       className={cn("mt-0 bg-white/5", errors.contactPhone && "border-red-400/50")}
                     />
                   </OnboardingField>
+                  <OnboardingField
+                    label="FFA#"
+                    hint="Optional — only coaches and clubs can see this"
+                    error={errors.ffaNumber?.message}
+                  >
+                    <Input
+                      {...form.register("ffaNumber")}
+                      placeholder="e.g. 12345678"
+                      className={cn("mt-0 bg-white/5", errors.ffaNumber && "border-red-400/50")}
+                    />
+                  </OnboardingField>
                   {error && <p className="text-sm text-red-400">{error}</p>}
                 </>
               )}

@@ -319,6 +319,17 @@ export function PlayerProfileEditDialog({ player, embedded }: PlayerProfileEditD
                     className={profileFieldClass}
                   />
                 </ProfileFormField>
+                <ProfileFormField
+                  label="FFA#"
+                  hint="Optional — only visible to coaches and clubs"
+                  error={form.formState.errors.ffaNumber?.message}
+                >
+                  <Input
+                    {...form.register("ffaNumber")}
+                    placeholder="e.g. 12345678"
+                    className={profileFieldClass}
+                  />
+                </ProfileFormField>
               </ProfileFormSection>
 
               <ProfileFormSection title="About & availability">

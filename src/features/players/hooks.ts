@@ -6,6 +6,8 @@ import { usePostcodeLocations } from "@/features/locations/hooks";
 import { useCoachSearchLocation } from "@/features/coaches/hooks";
 import { getCoachSearchLocation } from "@/lib/geo/location-radius";
 import { DEFAULT_RADIUS_KM } from "@/lib/geo/location-radius";
+import { useViewerRole } from "@/features/auth/use-viewer-role";
+import { redactPlayerList, redactPlayerPrivateFields } from "@/features/profile/player-private-fields";
 import {
   searchPlayers,
   getFeaturedPlayers,
@@ -109,10 +111,12 @@ export function usePlayerSearch(
 ) {
   const supabase = createClient();
   const locations = usePostcodeLocations();
+  const viewer = useViewerRole();
   const nearbyActive =
     filters.radiusKm != null && filters.latitude != null && filters.longitude != null;
   const searchEnabled = options?.enabled ?? true;
   const excludeUserId = options?.excludeUserId;
+  const viewerRole = viewer.data?.role ?? null;
 
   const postcodeContextReady = !nearbyActive || !!locations.data;
 
@@ -123,6 +127,7 @@ export function usePlayerSearch(
       stablePlayerSearchFiltersKey(filters),
       excludeUserId,
       postcodeContextReady,
+      viewerRole,
     ],
     queryFn: async ({ pageParam = 0 }) => {
       const result = await searchPlayers(
@@ -140,6 +145,9 @@ export function usePlayerSearch(
             : err.message ?? err.details ?? String(err);
         throw new Error(message);
       }
+      if (result.data) {
+        result.data = redactPlayerList(result.data, viewerRole);
+      }
       return result;
     },
     initialPageParam: 0,
@@ -153,11 +161,19 @@ export function usePlayerSearch(
 
 export function useFeaturedPlayers(options?: PlayerListOptions) {
   const supabase = createClient();
+  const viewer = useViewerRole();
   const enabled = options?.enabled ?? true;
   const excludeUserId = options?.excludeUserId;
+  const viewerRole = viewer.data?.role ?? null;
   return useQuery({
-    queryKey: ["players", "featured", excludeUserId],
-    queryFn: () => getFeaturedPlayers(supabase, excludeUserId),
+    queryKey: ["players", "featured", excludeUserId, viewerRole],
+    queryFn: async () => {
+      const result = await getFeaturedPlayers(supabase, excludeUserId);
+      if (result.data) {
+        result.data = redactPlayerList(result.data, viewerRole);
+      }
+      return result;
+    },
     enabled,
     staleTime: DISCOVER_SECTION_STALE_MS,
   });
@@ -165,11 +181,19 @@ export function useFeaturedPlayers(options?: PlayerListOptions) {
 
 export function useTrendingPlayers(options?: PlayerListOptions) {
   const supabase = createClient();
+  const viewer = useViewerRole();
   const enabled = options?.enabled ?? true;
   const excludeUserId = options?.excludeUserId;
+  const viewerRole = viewer.data?.role ?? null;
   return useQuery({
-    queryKey: ["players", "trending", excludeUserId],
-    queryFn: () => getTrendingPlayers(supabase, excludeUserId),
+    queryKey: ["players", "trending", excludeUserId, viewerRole],
+    queryFn: async () => {
+      const result = await getTrendingPlayers(supabase, excludeUserId);
+      if (result.data) {
+        result.data = redactPlayerList(result.data, viewerRole);
+      }
+      return result;
+    },
     enabled,
     staleTime: DISCOVER_SECTION_STALE_MS,
   });
@@ -194,6 +218,8 @@ export function useNearbyPlayers(
     locationSource === "player"
       ? player.playerDistrict?.postcode
       : coach.coachDistrict?.postcode;
+  const viewer = useViewerRole();
+  const viewerRole = viewer.data?.role ?? null;
 
   return useQuery({
     queryKey: [
@@ -204,16 +230,22 @@ export function useNearbyPlayers(
       searchLocation.location?.lat,
       searchLocation.location?.lng,
       excludeUserId,
+      viewerRole,
     ],
-    queryFn: () =>
-      getNearbyPlayers(
+    queryFn: async () => {
+      const result = await getNearbyPlayers(
         supabase,
         searchLocation.location,
         locations.data,
         radiusKm,
         originPostcode,
         excludeUserId
-      ),
+      );
+      if (result.data) {
+        result.data = redactPlayerList(result.data, viewerRole);
+      }
+      return result;
+    },
     enabled: enabled && !!searchLocation.location && !!locations.data,
     staleTime: DISCOVER_SECTION_STALE_MS,
   });
@@ -221,11 +253,19 @@ export function useNearbyPlayers(
 
 export function useRecentlyActive(options?: PlayerListOptions) {
   const supabase = createClient();
+  const viewer = useViewerRole();
   const enabled = options?.enabled ?? true;
   const excludeUserId = options?.excludeUserId;
+  const viewerRole = viewer.data?.role ?? null;
   return useQuery({
-    queryKey: ["players", "active", excludeUserId],
-    queryFn: () => getRecentlyActive(supabase, excludeUserId),
+    queryKey: ["players", "active", excludeUserId, viewerRole],
+    queryFn: async () => {
+      const result = await getRecentlyActive(supabase, excludeUserId);
+      if (result.data) {
+        result.data = redactPlayerList(result.data, viewerRole);
+      }
+      return result;
+    },
     enabled,
     staleTime: DISCOVER_SECTION_STALE_MS,
   });
@@ -233,9 +273,18 @@ export function useRecentlyActive(options?: PlayerListOptions) {
 
 export function usePlayer(userId: string) {
   const supabase = createClient();
+  const viewer = useViewerRole();
+  const viewerRole = viewer.data?.role ?? null;
+  const viewerId = viewer.data?.userId ?? null;
   return useQuery({
-    queryKey: ["player", userId],
-    queryFn: () => getPlayerById(supabase, userId),
+    queryKey: ["player", userId, viewerRole, viewerId],
+    queryFn: async () => {
+      const result = await getPlayerById(supabase, userId);
+      if (result.data && viewerId !== userId) {
+        result.data = redactPlayerPrivateFields(result.data, viewerRole);
+      }
+      return result;
+    },
     enabled: !!userId,
   });
 }
