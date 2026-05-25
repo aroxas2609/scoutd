@@ -29,6 +29,7 @@ import {
   telHref,
 } from "@/features/profile/player-contact";
 import { PlayerProfileCoachActions } from "@/components/profile/player-profile-coach-actions";
+import { PlayerProfilePlayerActions } from "@/components/profile/player-profile-player-actions";
 import { ChangePasswordSection } from "@/components/auth/change-password-section";
 import { DeleteAccountSection } from "@/components/auth/delete-account-section";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -89,6 +90,7 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
   const router = useRouter();
   const pathname = usePathname();
   const isCoachViewer = viewerRole === "coach";
+  const isPlayerViewer = viewerRole === "player";
   const name = player.profiles?.full_name ?? "Player";
   const availability = (player.availability ?? "available") as AvailabilityStatus;
 
@@ -185,6 +187,11 @@ export function PlayerProfileView({ player, isOwn, viewerRole }: PlayerProfileVi
           {!isOwn && isCoachViewer ? (
             <div className="w-full shrink-0 lg:max-w-xs lg:self-start">
               <PlayerProfileCoachActions playerId={player.user_id} />
+            </div>
+          ) : null}
+          {!isOwn && isPlayerViewer ? (
+            <div className="w-full shrink-0 lg:max-w-xs lg:self-start">
+              <PlayerProfilePlayerActions playerId={player.user_id} />
             </div>
           ) : null}
         </div>

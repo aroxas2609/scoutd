@@ -20,6 +20,18 @@ export type AssociationPostcodesMap = Map<string, string[]>;
 
 const EARTH_RADIUS_KM = 6371;
 
+/** Approximate lat/lng bounds for a radius search (cheap pre-filter before haversine). */
+export function getLatLngBoundingBox(lat: number, lng: number, radiusKm: number) {
+  const latDelta = radiusKm / 111;
+  const lngDelta = radiusKm / (111 * Math.cos((lat * Math.PI) / 180));
+  return {
+    minLat: lat - latDelta,
+    maxLat: lat + latDelta,
+    minLng: lng - lngDelta,
+    maxLng: lng + lngDelta,
+  };
+}
+
 export function calculateDistanceKm(
   lat1: number,
   lon1: number,

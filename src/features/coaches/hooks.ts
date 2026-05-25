@@ -100,8 +100,8 @@ export function useCoachDistrict(enabled = true) {
   });
 }
 
-export function useCoachSearchLocation() {
-  const district = useCoachDistrict();
+export function useCoachSearchLocation(enabled = true) {
+  const district = useCoachDistrict(enabled);
   const locations = usePostcodeLocations();
 
   const location = district.data && locations.data
@@ -122,7 +122,7 @@ export function useCoachSearchLocation() {
     location,
     label: location?.label ?? null,
     canSearchNearby: !!location,
-    isLoading: district.isLoading || locations.isLoading,
+    isLoading: enabled && (district.isLoading || locations.isLoading),
     coachDistrict: district.data,
   };
 }

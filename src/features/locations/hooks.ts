@@ -7,18 +7,23 @@ import {
   listPostcodeLocations,
 } from "./postcode-locations-repository";
 
-export function usePostcodeLocations() {
+export const POSTCODE_LOCATIONS_QUERY_KEY = ["postcode-locations"] as const;
+const POSTCODE_LOCATIONS_STALE_MS = 60 * 60 * 1000;
+
+export async function fetchPostcodeLocationsData() {
   const supabase = createClient();
+  const [locationsMap, associationPostcodes] = await Promise.all([
+    listPostcodeLocations(supabase),
+    getAssociationPostcodeMap(supabase),
+  ]);
+  return { locationsMap, associationPostcodes };
+}
+
+export function usePostcodeLocations() {
   return useQuery({
-    queryKey: ["postcode-locations"],
-    queryFn: async () => {
-      const [locationsMap, associationPostcodes] = await Promise.all([
-        listPostcodeLocations(supabase),
-        getAssociationPostcodeMap(supabase),
-      ]);
-      return { locationsMap, associationPostcodes };
-    },
-    staleTime: 60 * 60 * 1000,
+    queryKey: POSTCODE_LOCATIONS_QUERY_KEY,
+    queryFn: fetchPostcodeLocationsData,
+    staleTime: POSTCODE_LOCATIONS_STALE_MS,
     refetchOnMount: false,
   });
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useIsCoachViewer } from "@/features/auth/use-viewer-role";
 import { PlayerSearchView } from "@/components/discovery/player-search-view";
-import { CoachSearchView } from "@/components/discovery/coach-search-view";
+import { PlayerExploreTabs } from "@/components/discovery/player-explore-tabs";
 import { PremiumButton } from "@/components/ui/premium-button";
 import { PageLoader } from "@/components/ui/page-loader";
 
@@ -40,7 +40,7 @@ export default function SearchPage() {
   }
 
   if (isPlayer) {
-    return <CoachSearchView key={`explore-${userId}`} />;
+    return <PlayerExploreTabs key={`explore-${userId}`} />;
   }
 
   return (

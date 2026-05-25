@@ -1,12 +1,15 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+﻿import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  buildNearbyPlayersOrClause,
-  buildPlayerSearchOrClause,
+  buildPlayerLocationOrClause,
   escapeIlikePattern,
+  pickNearbySearchPostcodes,
 } from "@/lib/football/player-search-query";
 import {
+  calculateDistanceKm,
   DEFAULT_RADIUS_KM,
   filterPlayersByRadius,
+  getLatLngBoundingBox,
+  getPlayerSearchLocation,
   getPostcodesWithinRadius,
   sortPlayersByDistance,
   withOriginPostcode,
@@ -21,8 +24,10 @@ import type {
 } from "@/types/database";
 
 const PAGE_SIZE = 12;
-/** MVP: in-memory radius filter after SQL; cap candidates for performance. */
-const NEARBY_CANDIDATE_LIMIT = 300;
+/** Lat/lng bbox pre-fetch; refined in memory with haversine (not nearest — see postcode merge). */
+const NEARBY_COORD_LIMIT = 200;
+/** Postcode OR fallback when few players have stored coordinates. */
+const NEARBY_POSTCODE_FALLBACK_LIMIT = 100;
 
 const PLAYER_LIST_SELECT = `
   *,
@@ -44,23 +49,48 @@ export type PlayerSearchContext = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PlayerQuery = any;
 
-async function applyPlayerSearchFilters(
+/** Player Explore hides self after fetch — same Supabase query as coach Discover. */
+export function withoutExcludedUser<T extends { user_id: string }>(
+  rows: T[],
+  excludeUserId?: string
+): T[] {
+  if (!excludeUserId) return rows;
+  return rows.filter((row) => row.user_id !== excludeUserId);
+}
+
+/** Coach Discover name lookup (async, separate from the player_profiles builder). */
+async function fetchNameMatchUserIds(
   supabase: SupabaseClient,
+  term: string
+): Promise<string[]> {
+  const escaped = escapeIlikePattern(term.trim());
+  if (!escaped) return [];
+
+  const { data: nameMatches } = await supabase
+    .from("profiles")
+    .select("id")
+    .ilike("full_name", `%${escaped}%`)
+    .limit(50);
+
+  return (nameMatches ?? []).map((row) => row.id as string);
+}
+
+/** Sync filters only — keeps PostgREST builder chain valid for .order() / .range(). */
+function applyPlayerSearchFilters(
   query: PlayerQuery,
-  filters: PlayerSearchFilters
-): Promise<PlayerQuery> {
+  filters: PlayerSearchFilters,
+  nameMatchUserIds: string[]
+): PlayerQuery {
   if (filters.query?.trim()) {
     const term = filters.query.trim();
-    const escaped = escapeIlikePattern(term);
-    const { data: nameMatches } = await supabase
-      .from("profiles")
-      .select("id")
-      .ilike("full_name", `%${escaped}%`)
-      .limit(50);
-    const nameMatchUserIds = (nameMatches ?? []).map((row) => row.id as string);
-    const orClause = buildPlayerSearchOrClause(term, nameMatchUserIds);
-    if (orClause) query = query.or(orClause);
+    const locationOr = buildPlayerLocationOrClause(term);
+    if (nameMatchUserIds.length > 0) {
+      query = query.in("user_id", nameMatchUserIds);
+    } else if (locationOr) {
+      query = query.or(locationOr);
+    }
   }
+
   if (filters.position) query = query.eq("position", filters.position);
   if (filters.foot) query = query.eq("dominant_foot", filters.foot);
   if (filters.availability) query = query.eq("availability", filters.availability);
@@ -78,96 +108,264 @@ async function applyPlayerSearchFilters(
   return query;
 }
 
-function isNearbySearch(
-  filters: PlayerSearchFilters,
-  context?: PlayerSearchContext
-): context is PlayerSearchContext {
+async function resolveNameIdsForFilters(
+  supabase: SupabaseClient,
+  filters: PlayerSearchFilters
+): Promise<string[]> {
+  const term = filters.query?.trim();
+  if (!term) return [];
+  return fetchNameMatchUserIds(supabase, term);
+}
+
+function hasNearbyCoords(filters: PlayerSearchFilters): boolean {
   return (
-    !!context &&
     filters.radiusKm != null &&
     filters.latitude != null &&
     filters.longitude != null
   );
 }
 
-export async function searchPlayers(
-  supabase: SupabaseClient,
-  filters: PlayerSearchFilters,
-  page = 0,
+/** Geo pre-filter only when browsing nearby without a name/location text query. */
+function isGeoNearbySearch(filters: PlayerSearchFilters): boolean {
+  return hasNearbyCoords(filters) && !filters.query?.trim();
+}
+
+function attachDistanceToPlayers(
+  players: PlayerProfile[],
+  origin: SearchLocation,
   context?: PlayerSearchContext
-) {
-  const nearby = isNearbySearch(filters, context);
-
-  let query = supabase
-    .from("player_profiles")
-    .select(PLAYER_LIST_SELECT)
-    .order("updated_at", { ascending: false });
-
-  if (nearby) {
-    const coachLocation: SearchLocation = {
-      lat: filters.latitude!,
-      lng: filters.longitude!,
-      label: "Club",
-      source: "profile",
-    };
-    const postcodesInRadius = withOriginPostcode(
-      getPostcodesWithinRadius(
-        coachLocation,
-        filters.radiusKm!,
-        context.locationsMap
-      ),
-      filters.originPostcode
-    );
-    const nearbyOr = buildNearbyPlayersOrClause(
-      postcodesInRadius,
-      context.locationsMap
-    );
-    if (nearbyOr) {
-      query = query.or(nearbyOr);
+): PlayerWithDistance[] {
+  return players.map((player) => {
+    let distanceKm: number | undefined;
+    if (player.latitude != null && player.longitude != null) {
+      distanceKm = calculateDistanceKm(
+        origin.lat,
+        origin.lng,
+        player.latitude,
+        player.longitude
+      );
+    } else if (context) {
+      const loc = getPlayerSearchLocation(
+        player,
+        context.locationsMap,
+        context.associationPostcodes
+      );
+      if (loc) {
+        distanceKm = calculateDistanceKm(origin.lat, origin.lng, loc.lat, loc.lng);
+      }
     }
-    query = query.limit(NEARBY_CANDIDATE_LIMIT);
-  } else {
-    query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-  }
+    return { ...player, distanceKm };
+  });
+}
 
-  query = await applyPlayerSearchFilters(supabase, query, filters);
-
-  const { data, error } = await query;
-
-  if (!nearby) {
-    return {
-      data: data as PlayerProfile[] | null,
-      error,
-      hasMore: (data?.length ?? 0) === PAGE_SIZE,
-    };
-  }
-
-  const coachLocation: SearchLocation = {
+function nearbyOrigin(filters: PlayerSearchFilters): SearchLocation {
+  return {
     lat: filters.latitude!,
     lng: filters.longitude!,
     label: "Club",
     source: "profile",
   };
+}
 
-  let filtered: PlayerWithDistance[] = filterPlayersByRadius(
-    (data ?? []) as PlayerProfile[],
-    coachLocation,
-    filters.radiusKm!,
-    context.locationsMap,
-    context.associationPostcodes
-  );
-
-  if (filters.sortByNearest !== false) {
-    filtered = sortPlayersByDistance(filtered);
+function filterPlayersByStoredCoords(
+  players: PlayerProfile[],
+  origin: SearchLocation,
+  radiusKm: number
+): PlayerWithDistance[] {
+  const within: PlayerWithDistance[] = [];
+  for (const player of players) {
+    if (player.latitude == null || player.longitude == null) continue;
+    const distanceKm = calculateDistanceKm(
+      origin.lat,
+      origin.lng,
+      player.latitude,
+      player.longitude
+    );
+    if (distanceKm <= radiusKm) {
+      within.push({ ...player, distanceKm });
+    }
   }
+  return within;
+}
 
+function paginateNearbyResults(
+  filtered: PlayerWithDistance[],
+  page: number,
+  sortByNearest: boolean | undefined
+) {
+  const sorted =
+    sortByNearest !== false ? sortPlayersByDistance(filtered) : filtered;
   const start = page * PAGE_SIZE;
-  const pageData = filtered.slice(start, start + PAGE_SIZE);
-
+  const pageData = sorted.slice(start, start + PAGE_SIZE);
   return {
     data: pageData,
+    hasMore: sorted.length > start + PAGE_SIZE,
+  };
+}
+
+async function fetchNearbyByCoords(
+  supabase: SupabaseClient,
+  filters: PlayerSearchFilters,
+  excludeUserId?: string
+) {
+  const origin = nearbyOrigin(filters);
+  const box = getLatLngBoundingBox(origin.lat, origin.lng, filters.radiusKm!);
+
+  let query = supabase
+    .from("player_profiles")
+    .select(PLAYER_LIST_SELECT)
+    .not("latitude", "is", null)
+    .not("longitude", "is", null)
+    .gte("latitude", box.minLat)
+    .lte("latitude", box.maxLat)
+    .gte("longitude", box.minLng)
+    .lte("longitude", box.maxLng);
+
+  const nameIds = await resolveNameIdsForFilters(supabase, filters);
+  query = applyPlayerSearchFilters(query, filters, nameIds);
+  query = query.limit(NEARBY_COORD_LIMIT);
+
+  const { data, error } = await query;
+  const filtered = sortPlayersByDistance(
+    filterPlayersByStoredCoords(
+      withoutExcludedUser((data ?? []) as PlayerProfile[], excludeUserId),
+      origin,
+      filters.radiusKm!
+    )
+  );
+
+  return { filtered, error };
+}
+
+async function fetchNearbyByPostcodes(
+  supabase: SupabaseClient,
+  filters: PlayerSearchFilters,
+  context: PlayerSearchContext | undefined,
+  excludeUserId?: string
+) {
+  if (!context?.locationsMap?.size) {
+    return { filtered: [] as PlayerWithDistance[], error: null };
+  }
+
+  const origin = nearbyOrigin(filters);
+  const postcodesInRadius = withOriginPostcode(
+    getPostcodesWithinRadius(origin, filters.radiusKm!, context.locationsMap),
+    filters.originPostcode
+  );
+  const postcodes = pickNearbySearchPostcodes(
+    postcodesInRadius,
+    filters.radiusKm!,
+    origin,
+    context.locationsMap
+  );
+  if (!postcodes.length) {
+    return { filtered: [] as PlayerWithDistance[], error: null };
+  }
+
+  let query = supabase
+    .from("player_profiles")
+    .select(PLAYER_LIST_SELECT)
+    .in("postcode", postcodes);
+
+  const nameIds = await resolveNameIdsForFilters(supabase, filters);
+  query = applyPlayerSearchFilters(query, filters, nameIds);
+  query = query.limit(NEARBY_POSTCODE_FALLBACK_LIMIT);
+
+  const { data, error } = await query;
+  const filtered = sortPlayersByDistance(
+    filterPlayersByRadius(
+      withoutExcludedUser((data ?? []) as PlayerProfile[], excludeUserId),
+      origin,
+      filters.radiusKm!,
+      context.locationsMap,
+      context.associationPostcodes
+    )
+  );
+
+  return { filtered, error };
+}
+
+function mergeNearbyResults(
+  primary: PlayerWithDistance[],
+  secondary: PlayerWithDistance[]
+): PlayerWithDistance[] {
+  const seen = new Set(primary.map((p) => p.user_id));
+  const merged = [...primary];
+  for (const player of secondary) {
+    if (seen.has(player.user_id)) continue;
+    seen.add(player.user_id);
+    merged.push(player);
+  }
+  return merged;
+}
+
+export async function searchPlayers(
+  supabase: SupabaseClient,
+  filters: PlayerSearchFilters,
+  page = 0,
+  context?: PlayerSearchContext,
+  excludeUserId?: string
+) {
+  if (isGeoNearbySearch(filters)) {
+    const { filtered: coordMatches, error: coordError } = await fetchNearbyByCoords(
+      supabase,
+      filters,
+      excludeUserId
+    );
+
+    let filtered = coordMatches;
+    let error = coordError;
+
+    // Always merge postcode matches on page 0 — many players lack lat/lng; coord
+    // also returns an arbitrary row cap from the bbox, not guaranteed nearest.
+    if (page === 0 && context?.locationsMap.size) {
+      const { filtered: postcodeMatches, error: postcodeError } =
+        await fetchNearbyByPostcodes(supabase, filters, context, excludeUserId);
+      filtered = mergeNearbyResults(filtered, postcodeMatches);
+      error = error ?? postcodeError;
+    }
+
+    const { data, hasMore } = paginateNearbyResults(
+      filtered,
+      page,
+      filters.sortByNearest
+    );
+
+    return { data, error, hasMore };
+  }
+
+  const nameIds = await resolveNameIdsForFilters(supabase, filters);
+  let query = applyPlayerSearchFilters(
+    supabase.from("player_profiles").select(PLAYER_LIST_SELECT),
+    filters,
+    nameIds
+  );
+
+  const { data, error } = await query
+    .order("updated_at", { ascending: false })
+    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+  let results = withoutExcludedUser((data ?? []) as PlayerProfile[], excludeUserId);
+
+  if (hasNearbyCoords(filters)) {
+    let withDistance = attachDistanceToPlayers(
+      results,
+      nearbyOrigin(filters),
+      context
+    );
+    if (filters.sortByNearest !== false) {
+      withDistance = sortPlayersByDistance(withDistance);
+    }
+    return {
+      data: withDistance,
+      error,
+      hasMore: (data?.length ?? 0) === PAGE_SIZE,
+    };
+  }
+
+  return {
+    data: results,
     error,
-    hasMore: filtered.length > start + PAGE_SIZE,
+    hasMore: (data?.length ?? 0) === PAGE_SIZE,
   };
 }
 
@@ -180,7 +378,10 @@ export async function getPlayerById(supabase: SupabaseClient, userId: string) {
   return { data: data as PlayerProfile | null, error };
 }
 
-export async function getFeaturedPlayers(supabase: SupabaseClient) {
+export async function getFeaturedPlayers(
+  supabase: SupabaseClient,
+  excludeUserId?: string
+) {
   const { data: featured } = await supabase
     .from("featured_entities")
     .select("entity_id")
@@ -188,64 +389,83 @@ export async function getFeaturedPlayers(supabase: SupabaseClient) {
     .order("sort_order");
 
   if (!featured?.length) {
-    return searchPlayers(supabase, {}, 0);
+    return searchPlayers(supabase, {}, 0, undefined, excludeUserId);
   }
 
-  const ids = featured.map((f) => f.entity_id);
-  const { data, error } = await supabase
-    .from("player_profiles")
-    .select(PLAYER_LIST_SELECT)
-    .in("user_id", ids);
+  const ids = featured
+    .map((f) => f.entity_id)
+    .filter((id) => id !== excludeUserId);
+  if (!ids.length) {
+    return { data: [] as PlayerProfile[], error: null };
+  }
 
-  return { data: data as PlayerProfile[] | null, error };
+  let query = supabase.from("player_profiles").select(PLAYER_LIST_SELECT).in("user_id", ids);
+  const { data, error } = await query;
+
+  return { data: withoutExcludedUser((data ?? []) as PlayerProfile[], excludeUserId), error };
 }
 
-export async function getTrendingPlayers(supabase: SupabaseClient) {
+export async function getTrendingPlayers(
+  supabase: SupabaseClient,
+  excludeUserId?: string
+) {
   const { data, error } = await supabase
     .from("player_profiles")
     .select(PLAYER_LIST_SELECT)
     .order("completion_score", { ascending: false })
     .limit(8);
-  return { data: data as PlayerProfile[] | null, error };
+  return { data: withoutExcludedUser((data ?? []) as PlayerProfile[], excludeUserId), error };
 }
 
 export async function getNearbyPlayers(
   supabase: SupabaseClient,
   coachLocation: SearchLocation | null,
-  context: PlayerSearchContext,
+  context: PlayerSearchContext | undefined,
   radiusKm = DEFAULT_RADIUS_KM,
-  originPostcode?: string | null
+  originPostcode?: string | null,
+  excludeUserId?: string
 ): Promise<{ data: PlayerWithDistance[]; error: unknown }> {
   if (!coachLocation) {
     return { data: [], error: null };
   }
 
-  const { data, error } = await searchPlayers(
-    supabase,
-    {
-      radiusKm,
-      latitude: coachLocation.lat,
-      longitude: coachLocation.lng,
-      originPostcode: originPostcode ?? undefined,
-      sortByNearest: true,
-    },
-    0,
-    context
-  );
+  const filters: PlayerSearchFilters = {
+    radiusKm,
+    latitude: coachLocation.lat,
+    longitude: coachLocation.lng,
+    originPostcode: originPostcode ?? undefined,
+    sortByNearest: true,
+  };
+
+  const { filtered, error } = await fetchNearbyByCoords(supabase, filters, excludeUserId);
+  let results = filtered;
+
+  if (context?.locationsMap.size) {
+    const { filtered: postcodeMatches, error: postcodeError } =
+      await fetchNearbyByPostcodes(supabase, filters, context, excludeUserId);
+    results = mergeNearbyResults(results, postcodeMatches);
+    return {
+      data: sortPlayersByDistance(results).slice(0, 8),
+      error: error ?? postcodeError,
+    };
+  }
 
   return {
-    data: (data ?? []).slice(0, 8),
+    data: sortPlayersByDistance(results).slice(0, 8),
     error,
   };
 }
 
-export async function getRecentlyActive(supabase: SupabaseClient) {
+export async function getRecentlyActive(
+  supabase: SupabaseClient,
+  excludeUserId?: string
+) {
   const { data, error } = await supabase
     .from("player_profiles")
     .select(PLAYER_LIST_SELECT)
     .order("profiles(last_active_at)", { ascending: false })
     .limit(8);
-  return { data: data as PlayerProfile[] | null, error };
+  return { data: withoutExcludedUser((data ?? []) as PlayerProfile[], excludeUserId), error };
 }
 
 export function computeCompletionScore(profile: Partial<PlayerProfile>): number {

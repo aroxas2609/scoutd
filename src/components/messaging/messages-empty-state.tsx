@@ -36,7 +36,7 @@ export function MessagesEmptyState() {
       description={
         isCoach
           ? "Find a player, open their profile, and tap Message to start a conversation. The text box appears in the chat screen."
-          : "When a coach messages you, the conversation will show up here. You can reply in the chat screen."
+          : "Message players from Explore → Players, or clubs from Explore → Clubs. Conversations you start will show up here."
       }
       action={
         isCoach ? (
@@ -47,9 +47,10 @@ export function MessagesEmptyState() {
             </PremiumButton>
           </Link>
         ) : (
-          <Link href="/search">
-            <PremiumButton variant="outline" className="border-white/20">
-              Explore clubs
+          <Link href="/search?tab=players">
+            <PremiumButton className="gap-2">
+              <Search className="h-4 w-4" />
+              Browse players
             </PremiumButton>
           </Link>
         )

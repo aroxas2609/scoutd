@@ -18,6 +18,10 @@ describe("shouldRunPlayerSearch", () => {
     expect(shouldRunPlayerSearch({ ...base, isBrowsing: false })).toBe(true);
   });
 
+  it("returns true when catalog browse is enabled", () => {
+    expect(shouldRunPlayerSearch({ ...base, catalogEnabled: true })).toBe(true);
+  });
+
   it("returns false during browse even if filters would apply elsewhere", () => {
     expect(
       shouldRunPlayerSearch({

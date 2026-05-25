@@ -42,15 +42,12 @@ export async function searchCoaches(
   filters: CoachSearchFilters,
   page = 0
 ) {
-  let query = supabase
-    .from("coach_profiles")
-    .select(coachSelect)
-    .order("club_name", { ascending: true })
-    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-
+  let query = supabase.from("coach_profiles").select(coachSelect);
   query = applyCoachFilters(query, filters);
 
-  const { data, error } = await query;
+  const { data, error } = await query
+    .order("club_name", { ascending: true })
+    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
   return {
     data: data as CoachProfile[] | null,
     error,

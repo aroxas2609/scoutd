@@ -16,6 +16,10 @@ import {
 } from "@/features/auth/use-viewer-role";
 import { useUnreadMessageCount } from "@/features/messaging/hooks";
 import { prefetchAppTabs } from "@/features/navigation/prefetch-app-tabs";
+import {
+  fetchPostcodeLocationsData,
+  POSTCODE_LOCATIONS_QUERY_KEY,
+} from "@/features/locations/hooks";
 import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -37,6 +41,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         });
 
         const schedulePrefetch = () => {
+          void qc.prefetchQuery({
+            queryKey: POSTCODE_LOCATIONS_QUERY_KEY,
+            queryFn: fetchPostcodeLocationsData,
+            staleTime: 60 * 60 * 1000,
+          });
           prefetchAppTabs(qc, {
             userId,
             role: viewer?.role ?? null,

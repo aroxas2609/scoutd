@@ -27,8 +27,17 @@ const FilterDrawer = dynamic(
 );
 import { PlayerFiltersSidebar } from "@/components/discovery/player-filters-sidebar";
 import { useCoachDistrict, useCoachSearchLocation } from "@/features/coaches/hooks";
-import { useIsCoachViewer } from "@/features/auth/use-viewer-role";
-import { useFeaturedPlayers, usePlayerSearch, useTrendingPlayers } from "@/features/players/hooks";
+import { useQuery } from "@tanstack/react-query";
+import { AUTH_USER_ID_KEY } from "@/features/auth/auth-query-cache";
+import { fetchAuthUserId } from "@/features/auth/use-viewer-role";
+import {
+  useFeaturedPlayers,
+  usePlayerDistrict,
+  usePlayerSearch,
+  usePlayerSearchLocation,
+  useTrendingPlayers,
+  type PlayerListOptions,
+} from "@/features/players/hooks";
 import { Input } from "@/components/ui/input";
 import { buttonVariants } from "@/components/ui/button";
 import { Search, Users, Layers } from "lucide-react";
@@ -42,21 +51,59 @@ import {
   type RadiusKm,
 } from "@/lib/geo/location-radius";
 import { shouldRunPlayerSearch } from "@/features/players/search-enabled";
-export function PlayerSearchView() {
-  const [query, setQuery] = useQueryState("q", { defaultValue: "" });
+
+const PLAYER_SEARCH_DEBOUNCE_MS = 350;
+
+type PlayerSearchViewProps = {
+  viewerMode?: "coach" | "player";
+  hideHeader?: boolean;
+};
+
+export function PlayerSearchView({
+  viewerMode = "coach",
+  hideHeader = false,
+}: PlayerSearchViewProps) {
+  const isCoachMode = viewerMode === "coach";
+  const [urlQuery, setUrlQuery] = useQueryState("q", { defaultValue: "", shallow: true });
+  const [searchInput, setSearchInput] = useState(() => urlQuery);
   const [nearbyParam, setNearbyParam] = useQueryState("nearby", parseAsString);
+  const [allParam, setAllParam] = useQueryState("all", parseAsString);
   const [radiusParam, setRadiusParam] = useQueryState("radius", parseAsInteger);
-  const debouncedQuery = useDebouncedValue(query, 350);
+  const debouncedQuery = useDebouncedValue(searchInput, PLAYER_SEARCH_DEBOUNCE_MS);
+
+  useEffect(() => {
+    const next = debouncedQuery.trim();
+    const current = (urlQuery ?? "").trim();
+    if (next !== current) {
+      void setUrlQuery(next || null);
+    }
+  }, [debouncedQuery, urlQuery, setUrlQuery]);
   const [filterState, setFilterState] = useState<DrawerFilterState>({});
   const [myDistrict, setMyDistrict] = useState(false);
   const [sortByNearest, setSortByNearest] = useState(true);
   const [swipeMode, setSwipeMode] = useState(false);
-  const { data: coachDistrict } = useCoachDistrict();
-  const coachSearch = useCoachSearchLocation();
-  const { isCoach } = useIsCoachViewer();
-  const coachAssociationId = coachDistrict?.association_id ?? null;
+  const { data: coachDistrict } = useCoachDistrict(isCoachMode);
+  const coachSearch = useCoachSearchLocation(isCoachMode);
+  const { data: playerDistrict } = usePlayerDistrict(!isCoachMode);
+  const playerSearch = usePlayerSearchLocation(!isCoachMode);
+  const authUser = useQuery({
+    queryKey: AUTH_USER_ID_KEY,
+    queryFn: fetchAuthUserId,
+    staleTime: 0,
+    enabled: !isCoachMode,
+  });
+
+  const districtProfile = isCoachMode ? coachDistrict : playerDistrict;
+  const searchLocation = isCoachMode ? coachSearch : playerSearch;
+  const associationId = districtProfile?.association_id ?? null;
+
+  const listOptions: PlayerListOptions | undefined =
+    !isCoachMode && authUser.data
+      ? { excludeUserId: authUser.data }
+      : undefined;
 
   const nearbyEnabled = nearbyParam === "1";
+  const catalogEnabled = allParam === "1";
   const radiusKm: RadiusKm =
     radiusParam != null && isRadiusKm(radiusParam) ? radiusParam : DEFAULT_RADIUS_KM;
 
@@ -65,13 +112,15 @@ export function PlayerSearchView() {
       ...filterState,
       query: debouncedQuery || undefined,
       coachAssociationId:
-        myDistrict && coachAssociationId ? coachAssociationId : undefined,
-      ...(nearbyEnabled && coachSearch.location
+        !catalogEnabled && myDistrict && associationId ? associationId : undefined,
+      ...(!catalogEnabled &&
+      nearbyEnabled &&
+      searchLocation.location
         ? {
             radiusKm,
-            latitude: coachSearch.location.lat,
-            longitude: coachSearch.location.lng,
-            originPostcode: coachDistrict?.postcode ?? undefined,
+            latitude: searchLocation.location.lat,
+            longitude: searchLocation.location.lng,
+            originPostcode: districtProfile?.postcode ?? undefined,
             sortByNearest,
           }
         : {}),
@@ -79,11 +128,12 @@ export function PlayerSearchView() {
     [
       filterState,
       debouncedQuery,
+      catalogEnabled,
       myDistrict,
-      coachAssociationId,
+      associationId,
       nearbyEnabled,
-      coachSearch.location,
-      coachDistrict?.postcode,
+      searchLocation.location,
+      districtProfile?.postcode,
       radiusKm,
       sortByNearest,
     ]
@@ -92,11 +142,16 @@ export function PlayerSearchView() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const hasActiveFilters = countActivePlayerFilters(filterState) > 0;
+  const hasTextQuery = !!debouncedQuery.trim();
   const isBrowsing =
-    !debouncedQuery.trim() && !hasActiveFilters && !myDistrict && !nearbyEnabled;
+    !catalogEnabled &&
+    !hasTextQuery &&
+    !hasActiveFilters &&
+    !myDistrict &&
+    !nearbyEnabled;
 
-  const featured = useFeaturedPlayers({ enabled: isBrowsing });
-  const trending = useTrendingPlayers({ enabled: isBrowsing });
+  const featured = useFeaturedPlayers({ enabled: isBrowsing, ...listOptions });
+  const trending = useTrendingPlayers({ enabled: isBrowsing, ...listOptions });
 
   const search = usePlayerSearch(filters, {
     enabled: shouldRunPlayerSearch({
@@ -105,7 +160,9 @@ export function PlayerSearchView() {
       hasActiveFilters,
       myDistrict,
       nearbyEnabled,
+      catalogEnabled,
     }),
+    ...listOptions,
   });
 
   const players = useMemo(
@@ -114,25 +171,69 @@ export function PlayerSearchView() {
         []) as PlayerWithDistance[],
     [search.data]
   );
-  const showInitialSkeleton = search.isPending && players.length === 0;
-  const showDistrictSetup = myDistrict && !coachAssociationId;
+  const showInitialSkeleton =
+    search.isPending && !search.isPlaceholderData && players.length === 0;
+  const hasSearchQuery = !!debouncedQuery.trim();
+  const activelySearching =
+    catalogEnabled ||
+    searchInput.trim().length > 0 ||
+    hasActiveFilters ||
+    myDistrict;
+  const showCatalogEmpty =
+    catalogEnabled &&
+    !hasSearchQuery &&
+    players.length === 0 &&
+    !search.isFetching &&
+    !showInitialSkeleton;
+  const showDistrictSetup = myDistrict && !associationId && !activelySearching;
   const showNearbySetup =
-    nearbyEnabled && !coachSearch.isLoading && !coachSearch.canSearchNearby;
+    nearbyEnabled &&
+    !searchLocation.isLoading &&
+    !searchLocation.canSearchNearby &&
+    !activelySearching;
   const showDistrictEmpty =
     myDistrict &&
-    !!coachAssociationId &&
+    !!associationId &&
     !nearbyEnabled &&
     players.length === 0 &&
     !search.isFetching &&
     !showInitialSkeleton;
   const showNearbyEmpty =
     nearbyEnabled &&
-    coachSearch.canSearchNearby &&
+    searchLocation.canSearchNearby &&
+    players.length === 0 &&
+    !search.isFetching &&
+    !showInitialSkeleton &&
+    !hasSearchQuery;
+  const showSearchEmpty =
+    hasSearchQuery &&
     players.length === 0 &&
     !search.isFetching &&
     !showInitialSkeleton;
 
+  function enableCatalog() {
+    void setAllParam("1");
+    void setNearbyParam(null);
+    setMyDistrict(false);
+  }
+
+  function toggleCatalog() {
+    if (catalogEnabled) {
+      void setAllParam(null);
+    } else {
+      enableCatalog();
+    }
+  }
+
+  function handleMyDistrictChange(value: boolean) {
+    if (value) {
+      void setAllParam(null);
+    }
+    setMyDistrict(value);
+  }
+
   function enableNearby() {
+    void setAllParam(null);
     setNearbyParam("1");
     if (radiusParam == null || !isRadiusKm(radiusParam)) {
       setRadiusParam(DEFAULT_RADIUS_KM);
@@ -146,6 +247,8 @@ export function PlayerSearchView() {
       enableNearby();
     }
   }
+
+  const catalogChipLabel = "All players";
 
   const fetchNextPage = search.fetchNextPage;
   const hasNextPage = search.hasNextPage;
@@ -164,48 +267,60 @@ export function PlayerSearchView() {
   const featuredList = featured.data?.data ?? [];
   const trendingList = trending.data?.data ?? [];
   const swipePlayers = featuredList.length ? featuredList : trendingList;
-  const canSwipe = isBrowsing && swipePlayers.length > 0;
+  const canSwipe = isCoachMode && isBrowsing && swipePlayers.length > 0;
 
   useEffect(() => {
     if (!isBrowsing) setSwipeMode(false);
   }, [isBrowsing]);
 
+  const headerTitle = isCoachMode ? "Discover" : "Players";
+  const headerSubtitle = swipeMode
+    ? "Swipe to scout"
+    : catalogEnabled
+      ? "Browsing all players"
+      : nearbyEnabled
+        ? isCoachMode
+          ? "Players near your club"
+          : "Players near you"
+        : myDistrict
+          ? "Players in your district"
+          : isBrowsing
+            ? isCoachMode
+              ? "Browse players or search below"
+              : "Find teammates and browse highlights"
+            : "Find players";
+
   return (
     <div>
-      <AppHeader
-        title="Discover"
-        subtitle={
-          swipeMode
-            ? "Swipe to scout"
-            : nearbyEnabled
-              ? "Players near your club"
-              : myDistrict
-                ? "Players in your district"
-                : isBrowsing
-                  ? "Browse players or search below"
-                  : "Find players"
-        }
-      />
-      {isCoach ? (
+      {!hideHeader ? (
+        <AppHeader title={headerTitle} subtitle={headerSubtitle} />
+      ) : null}
+      {isCoachMode ? (
         <div className="hidden border-b border-white/[0.06] bg-[var(--bg-deep)]/95 lg:block lg:px-6 lg:pb-4 lg:pt-2">
           <div className="space-y-3">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value || null)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search name, club, suburb…"
                 className="h-11 pl-10"
+                autoComplete="off"
+                spellCheck={false}
               />
             </div>
             <DiscoverFilterChips
               myDistrict={myDistrict}
-              onMyDistrictChange={setMyDistrict}
+              onMyDistrictChange={handleMyDistrictChange}
               nearbyEnabled={nearbyEnabled}
               onNearbyToggle={toggleNearby}
+              catalogEnabled={catalogEnabled}
+              onCatalogToggle={toggleCatalog}
+              catalogLabel={catalogChipLabel}
+              showMyDistrict={isCoachMode}
             />
           </div>
-          {nearbyEnabled ? (
+          {nearbyEnabled && !catalogEnabled ? (
             <NearbyRadiusControls
               className="mt-3 border-t-0 px-0 py-0"
               radiusKm={radiusKm}
@@ -213,9 +328,11 @@ export function PlayerSearchView() {
               sortByNearest={sortByNearest}
               onSortByNearestChange={setSortByNearest}
               searchLabel={
-                coachSearch.label === "Your district" && coachDistrict?.league
+                isCoachMode &&
+                coachSearch.label === "Your district" &&
+                coachDistrict?.league
                   ? coachDistrict.league
-                  : coachSearch.label
+                  : searchLocation.label
               }
             />
           ) : null}
@@ -223,18 +340,18 @@ export function PlayerSearchView() {
       ) : null}
       <div
         className={
-          isCoach
+          isCoachMode
             ? "lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] xl:grid-cols-[17.5rem_minmax(0,1fr)] lg:items-start lg:gap-6 lg:px-6 lg:pt-4"
             : undefined
         }
       >
-        {isCoach ? (
+        {isCoachMode ? (
           <PlayerFiltersSidebar filters={filterState} onChange={setFilterState} />
         ) : null}
         <div className="min-w-0">
       <div
         className={
-          isCoach
+          isCoachMode
             ? "sticky top-[65px] z-30 border-b border-white/[0.06] bg-[var(--bg-deep)]/95 backdrop-blur-md lg:hidden"
             : "sticky top-[65px] z-30 border-b border-white/[0.06] bg-[var(--bg-deep)]/95 backdrop-blur-md lg:top-[4.5rem]"
         }
@@ -244,33 +361,39 @@ export function PlayerSearchView() {
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value || null)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search name, club, suburb…"
                 className="h-10 pl-10"
+                autoComplete="off"
+                spellCheck={false}
               />
             </div>
             <FilterDrawer filters={filterState} onChange={setFilterState} />
           </div>
-          {isCoach ? (
-            <DiscoverFilterChips
-              myDistrict={myDistrict}
-              onMyDistrictChange={setMyDistrict}
-              nearbyEnabled={nearbyEnabled}
-              onNearbyToggle={toggleNearby}
-            />
-          ) : null}
+          <DiscoverFilterChips
+            myDistrict={myDistrict}
+            onMyDistrictChange={handleMyDistrictChange}
+            nearbyEnabled={nearbyEnabled}
+            onNearbyToggle={toggleNearby}
+            catalogEnabled={catalogEnabled}
+            onCatalogToggle={toggleCatalog}
+            catalogLabel={catalogChipLabel}
+            showMyDistrict={isCoachMode}
+          />
         </div>
-        {nearbyEnabled ? (
+        {nearbyEnabled && !catalogEnabled ? (
           <NearbyRadiusControls
             radiusKm={radiusKm}
             onRadiusChange={(km) => setRadiusParam(km)}
             sortByNearest={sortByNearest}
             onSortByNearestChange={setSortByNearest}
             searchLabel={
-              coachSearch.label === "Your district" && coachDistrict?.league
+              isCoachMode &&
+              coachSearch.label === "Your district" &&
+              coachDistrict?.league
                 ? coachDistrict.league
-                : coachSearch.label
+                : searchLocation.label
             }
           />
         ) : null}
@@ -295,8 +418,12 @@ export function PlayerSearchView() {
         <div className="px-4 pb-8 pt-4">
           <EmptyStateCinematic
             icon={<Users className="h-6 w-6" />}
-            title="Add your club district"
-            description="Add your club district to find players in your area."
+            title={isCoachMode ? "Add your club district" : "Add your district"}
+            description={
+              isCoachMode
+                ? "Add your club district to find players in your area."
+                : "Add your district on your profile to find players in your area."
+            }
             action={
               <Link href="/profile" className={buttonVariants({ variant: "outline", size: "sm" })}>
                 Go to profile
@@ -308,8 +435,12 @@ export function PlayerSearchView() {
         <div className="px-4 pb-8 pt-4">
           <EmptyStateCinematic
             icon={<Users className="h-6 w-6" />}
-            title="Add your club location"
-            description="Add your club suburb or postcode to search nearby players."
+            title={isCoachMode ? "Add your club location" : "Add your location"}
+            description={
+              isCoachMode
+                ? "Add your club suburb or postcode to search nearby players."
+                : "Add your suburb or postcode on your profile to find nearby players."
+            }
             action={
               <Link href="/profile" className={buttonVariants({ variant: "outline", size: "sm" })}>
                 Go to profile
@@ -324,11 +455,17 @@ export function PlayerSearchView() {
           </div>
         ) : (
           <div className="px-4 pb-10 pt-5 lg:px-0 lg:pb-8 lg:pt-4">
-            {isCoach ? <PlayersNearClubWidget onSearchNearby={enableNearby} /> : null}
+            {isCoachMode ? <PlayersNearClubWidget onSearchNearby={enableNearby} /> : null}
             <PlayerDiscoverSections
-              hideNearbySection={isCoach}
+              hideNearbySection={isCoachMode}
               featuredList={featuredList}
               trendingList={trendingList}
+              listOptions={listOptions}
+              nearbyOptions={
+                isCoachMode
+                  ? { locationSource: "coach", ...listOptions }
+                  : { locationSource: "player", ...listOptions }
+              }
             />
           </div>
         )
@@ -341,6 +478,18 @@ export function PlayerSearchView() {
                   <Skeleton key={i} className="aspect-[4/5] rounded-2xl" />
                 ))}
               </div>
+            ) : search.isError ? (
+              <EmptyStateCinematic
+                icon={<Users className="h-6 w-6" />}
+                title="Could not load players"
+                description={
+                  nearbyEnabled
+                    ? "Nearby search failed — try a smaller radius (25 km or less), or turn off Nearby and search by name."
+                    : search.error instanceof Error
+                      ? search.error.message
+                      : "Something went wrong while searching. Try again in a moment."
+                }
+              />
             ) : showDistrictEmpty ? (
               <EmptyStateCinematic
                 icon={<Users className="h-6 w-6" />}
@@ -353,11 +502,33 @@ export function PlayerSearchView() {
                 title="No nearby players found"
                 description="Try expanding your radius or using My District instead."
               />
+            ) : showCatalogEmpty ? (
+              <EmptyStateCinematic
+                icon={<Users className="h-6 w-6" />}
+                title="No players yet"
+                description="When players join Scoutd, they will show up here."
+              />
+            ) : showSearchEmpty ? (
+              <EmptyStateCinematic
+                icon={<Users className="h-6 w-6" />}
+                title="No players found"
+                description={
+                  nearbyEnabled
+                    ? "No one matched that name. Turn off Nearby to search everywhere, or check the spelling."
+                    : isCoachMode
+                      ? "Try a different search or adjust filters."
+                      : "Try another name or suburb. You won’t see your own profile in results — ask a teammate to search for you, or check the name matches their profile exactly."
+                }
+              />
             ) : players.length === 0 && !search.isFetching ? (
               <EmptyStateCinematic
                 icon={<Users className="h-6 w-6" />}
                 title="No players found"
-                description="Try a different search or adjust filters."
+                description={
+                  isCoachMode
+                    ? "Try a different search or adjust filters."
+                    : "Try a different search or widen your filters to find teammates."
+                }
               />
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:gap-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">

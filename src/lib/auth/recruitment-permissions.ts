@@ -1,7 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { UserRole } from "@/types/database";
-import { findDirectConversation } from "@/features/messaging/repository";
-
 async function getUserRole(
   supabase: SupabaseClient,
   userId: string
@@ -42,14 +40,7 @@ export async function canStartConversation(
   }
 
   if (actorRole === "player" && otherRole === "player") {
-    const existing = await findDirectConversation(supabase, actorId, otherUserId);
-    if (existing) {
-      return { allowed: true };
-    }
-    return {
-      allowed: false,
-      error: "Players cannot start new chats with other players. Contact coaches from their club profile.",
-    };
+    return { allowed: true };
   }
 
   return {
