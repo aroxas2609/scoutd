@@ -7,6 +7,7 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
 import { PageLoader } from "@/components/ui/page-loader";
 import { createClient } from "@/lib/supabase/client";
+import { getAuthRedirectError } from "@/lib/auth/auth-redirect-errors";
 import { getPostLoginRedirect } from "@/lib/auth/redirect-path";
 
 const RECOVERY_FLAG = "scoutd-password-recovery";
@@ -22,6 +23,23 @@ function UpdatePasswordInner() {
     const supabase = createClient();
 
     async function establishSession() {
+      const hash = window.location.hash.replace(/^#/, "");
+      const redirectError = getAuthRedirectError(searchParams, hash);
+      if (redirectError) {
+        setAuthError(redirectError.message);
+        setStatus("unauthenticated");
+        window.history.replaceState(null, "", window.location.pathname);
+        return;
+      }
+
+      const code = searchParams.get("code");
+      if (code) {
+        window.location.replace(
+          `/auth/callback?type=recovery&code=${encodeURIComponent(code)}`
+        );
+        return;
+      }
+
       const tokenHash = searchParams.get("token_hash");
       const otpType = searchParams.get("type");
       if (tokenHash && otpType === "recovery") {
@@ -38,21 +56,6 @@ function UpdatePasswordInner() {
         window.history.replaceState(null, "", window.location.pathname);
       }
 
-      const code = searchParams.get("code");
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (error) {
-          setAuthError(
-            "This reset link could not be verified. Request a new link from the same browser you use to sign in, then open the email there."
-          );
-          setStatus("unauthenticated");
-          return;
-        }
-        sessionStorage.setItem(RECOVERY_FLAG, "1");
-        window.history.replaceState(null, "", window.location.pathname);
-      }
-
-      const hash = window.location.hash.replace(/^#/, "");
       if (hash) {
         const params = new URLSearchParams(hash);
         const accessToken = params.get("access_token");
@@ -99,10 +102,7 @@ function UpdatePasswordInner() {
 
   useEffect(() => {
     if (status !== "unauthenticated") return;
-    const hasRecoveryParams =
-      searchParams.has("code") ||
-      (searchParams.get("type") === "recovery" && searchParams.has("token_hash"));
-    if (hasRecoveryParams || authError) return;
+    if (authError) return;
     router.replace("/login?redirect=/update-password");
   }, [status, router, searchParams, authError]);
 

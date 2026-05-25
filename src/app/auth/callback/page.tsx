@@ -4,6 +4,7 @@ import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { getAuthRedirectError } from "@/lib/auth/auth-redirect-errors";
 
 function resolveCallbackTarget(searchParams: URLSearchParams) {
   const next = searchParams.get("next");
@@ -31,6 +32,15 @@ function AuthCallbackInner() {
     const target = resolveCallbackTarget(searchParams);
 
     async function finish() {
+      const hash = window.location.hash.replace(/^#/, "");
+      const redirectError = getAuthRedirectError(searchParams, hash);
+      if (redirectError) {
+        router.replace(
+          `/forgot-password?error=${encodeURIComponent(redirectError.message)}`
+        );
+        return;
+      }
+
       const code = searchParams.get("code");
       const tokenHash = searchParams.get("token_hash");
       const type = searchParams.get("type");
