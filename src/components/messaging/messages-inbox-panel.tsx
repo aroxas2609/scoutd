@@ -12,6 +12,7 @@ import { MessagesEmptyState } from "@/components/messaging/messages-empty-state"
 import { ConversationListItem } from "@/components/messaging/conversation-list-item";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { PageLoader } from "@/components/ui/page-loader";
+import { EnablePushBanner } from "@/components/push/enable-push-banner";
 import { useViewerRole } from "@/features/auth/use-viewer-role";
 import { cn } from "@/lib/utils";
 
@@ -52,16 +53,19 @@ export function MessagesInboxPanel({ variant = "page" }: MessagesInboxPanelProps
           ) : null}
         </div>
       ) : (
-        <AppHeader
-          title="Messages"
-          subtitle={
-            inboxFilter === "archived"
-              ? "Archived"
-              : totalUnread > 0
-                ? `${totalUnread} unread`
-                : undefined
-          }
-        />
+        <>
+          <AppHeader
+            title="Messages"
+            subtitle={
+              inboxFilter === "archived"
+                ? "Archived"
+                : totalUnread > 0
+                  ? `${totalUnread} unread`
+                  : undefined
+            }
+          />
+          <EnablePushBanner className="mt-0" />
+        </>
       )}
 
       <div

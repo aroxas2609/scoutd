@@ -41,6 +41,7 @@ import {
 } from "@/components/profile/profile-settings";
 import { ProfilePhotoUpload } from "@/components/profile/profile-photo-upload";
 import { PlayerProfileEditDialog } from "@/components/profile/player-profile-edit-dialog";
+import { PushNotificationSettingsRow } from "@/components/push/enable-push-banner";
 import { PlayerMediaSection } from "@/components/profile/player-media-section";
 import { ProfileDetailRow, ProfileSection } from "@/components/profile/profile-detail-row";
 import { ProfileDetailHeader } from "@/components/profile/profile-detail-header";
@@ -80,6 +81,7 @@ function PlayerAccountSettings({
     <ProfileAccountSection className={className}>
       <ProfileSettingsCard>
         <PlayerProfileEditDialog player={player} embedded />
+        <PushNotificationSettingsRow />
         <ChangePasswordSection embedded />
       </ProfileSettingsCard>
       <SignOutButton />

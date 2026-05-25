@@ -307,22 +307,6 @@ export function useSendMessage(conversationId: string) {
         .eq("conversation_id", conversationId)
         .eq("user_id", user.id);
 
-      const { data: participants } = await supabase
-        .from("conversation_participants")
-        .select("user_id")
-        .eq("conversation_id", conversationId);
-
-      const recipientId = participants?.find((p) => p.user_id !== user.id)?.user_id;
-      if (recipientId) {
-        await supabase.from("notifications").insert({
-          user_id: recipientId,
-          type: "new_message",
-          title: "New message",
-          body: body.slice(0, 120),
-          metadata: { conversation_id: conversationId, sender_id: user.id },
-        });
-      }
-
       return inserted as Message;
     },
     onSuccess: (message) => {

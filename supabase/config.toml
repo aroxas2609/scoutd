@@ -1,5 +1,5 @@
-[project]
-id = "scoutd-local"
+# Local Supabase CLI (docker). Remote project: wqpooxjzuzdishjnkkvs
+project_id = "scoutd"
 
 [api]
 enabled = true

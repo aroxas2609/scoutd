@@ -15,6 +15,7 @@ import { VerificationBadge } from "@/components/ui/verification-badge";
 import { ReportBlockMenu } from "@/components/moderation/report-block-menu";
 import { ProfilePhotoUpload } from "@/components/profile/profile-photo-upload";
 import { CoachProfileEditDialog } from "@/components/profile/coach-profile-edit-dialog";
+import { PushNotificationSettingsRow } from "@/components/push/enable-push-banner";
 import { ChangePasswordSection } from "@/components/auth/change-password-section";
 import { DeleteAccountSection } from "@/components/auth/delete-account-section";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -205,6 +206,7 @@ export function CoachProfileView({ coach, isOwn, isPlayerViewer }: Props) {
                 href="/shortlist"
               />
               <CoachProfileEditDialog coach={coach} embedded />
+              <PushNotificationSettingsRow />
               <ChangePasswordSection embedded />
             </ProfileSettingsCard>
             <SignOutButton />
