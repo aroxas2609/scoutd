@@ -1,5 +1,6 @@
 "use client";
 
+import { useDeferredReady } from "@/lib/use-deferred-ready";
 import { PlayerCard } from "@/components/discovery/player-card";
 import {
   useFeaturedPlayers,
@@ -66,11 +67,16 @@ export function PlayerDiscoverSections({
     (skipFeaturedQuery || featured.isSuccess || featured.isError) &&
     (skipTrendingQuery || trending.isSuccess || trending.isError);
 
+  const deferSecondary = useDeferredReady(primaryReady);
+
   const nearby = useNearbyPlayers(undefined, {
-    enabled: !hideNearbySection && primaryReady,
+    enabled: !hideNearbySection && deferSecondary,
     ...nearbyOptions,
   });
-  const active = useRecentlyActive(listOptions);
+  const active = useRecentlyActive({
+    ...listOptions,
+    enabled: deferSecondary && (listOptions?.enabled ?? true),
+  });
 
   const featuredList = featuredListProp ?? featured.data?.data ?? [];
   const trendingList = trendingListProp ?? trending.data?.data ?? [];
@@ -80,6 +86,7 @@ export function PlayerDiscoverSections({
 
   const showEmpty =
     primaryReady &&
+    deferSecondary &&
     (!hideNearbySection ? nearby.isSuccess || nearby.isError : true) &&
     (active.isSuccess || active.isError) &&
     featuredList.length === 0 &&

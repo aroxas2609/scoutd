@@ -89,7 +89,8 @@ export function PlayerSearchView({
   const authUser = useQuery({
     queryKey: AUTH_USER_ID_KEY,
     queryFn: fetchAuthUserId,
-    staleTime: 0,
+    staleTime: 2 * 60 * 1000,
+    refetchOnMount: false,
     enabled: !isCoachMode,
   });
 

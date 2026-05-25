@@ -40,12 +40,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           queryFn: fetchViewerRole,
         });
 
-        const schedulePrefetch = () => {
-          void qc.prefetchQuery({
-            queryKey: POSTCODE_LOCATIONS_QUERY_KEY,
-            queryFn: fetchPostcodeLocationsData,
-            staleTime: 60 * 60 * 1000,
-          });
+        void qc.prefetchQuery({
+          queryKey: POSTCODE_LOCATIONS_QUERY_KEY,
+          queryFn: fetchPostcodeLocationsData,
+          staleTime: 60 * 60 * 1000,
+        });
+
+        const scheduleTabPrefetch = () => {
           prefetchAppTabs(qc, {
             userId,
             role: viewer?.role ?? null,
@@ -53,9 +54,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         };
 
         if (typeof requestIdleCallback === "function") {
-          requestIdleCallback(schedulePrefetch, { timeout: 3000 });
+          requestIdleCallback(scheduleTabPrefetch, { timeout: 6000 });
         } else {
-          window.setTimeout(schedulePrefetch, 2000);
+          window.setTimeout(scheduleTabPrefetch, 4000);
         }
       });
   }, [qc]);

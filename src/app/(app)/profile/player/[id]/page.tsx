@@ -4,7 +4,7 @@ import { use, useEffect } from "react";
 import { usePlayer } from "@/features/players/hooks";
 import { useViewerRole } from "@/features/auth/use-viewer-role";
 import { PlayerProfileView } from "@/components/profile/player-profile-view";
-import { createClient } from "@/lib/supabase/client";
+import { trackPlayerProfileView } from "@/features/profile/track-profile-view";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function PlayerProfileSkeleton() {
@@ -42,15 +42,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ id: st
     if (!viewerId || viewerId === id) return;
 
     async function trackView() {
-      const supabase = createClient();
-      await supabase.from("profile_views").insert({ viewer_id: viewerId, viewed_id: id });
-      await supabase.from("notifications").insert({
-        user_id: id,
-        type: "profile_viewed",
-        title: "Profile viewed",
-        body: "A coach viewed your profile",
-        metadata: { viewer_id: viewerId },
-      });
+      await trackPlayerProfileView(id);
     }
 
     const run = () => {

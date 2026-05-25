@@ -9,6 +9,7 @@ import {
 } from "./auth-query-cache";
 
 const ROLE_STALE_MS = 5 * 60 * 1000;
+const AUTH_SESSION_STALE_MS = 2 * 60 * 1000;
 
 export async function fetchAuthUserId(): Promise<string | null> {
   const supabase = createClient();
@@ -42,8 +43,9 @@ function useAuthUserIdQuery() {
   return useQuery({
     queryKey: AUTH_USER_ID_KEY,
     queryFn: fetchAuthUserId,
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: AUTH_SESSION_STALE_MS,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 }
 

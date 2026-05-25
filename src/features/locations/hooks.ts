@@ -9,6 +9,7 @@ import {
 
 export const POSTCODE_LOCATIONS_QUERY_KEY = ["postcode-locations"] as const;
 const POSTCODE_LOCATIONS_STALE_MS = 60 * 60 * 1000;
+const POSTCODE_LOCATIONS_GC_MS = 24 * 60 * 60 * 1000;
 
 export async function fetchPostcodeLocationsData() {
   const supabase = createClient();
@@ -24,6 +25,8 @@ export function usePostcodeLocations() {
     queryKey: POSTCODE_LOCATIONS_QUERY_KEY,
     queryFn: fetchPostcodeLocationsData,
     staleTime: POSTCODE_LOCATIONS_STALE_MS,
+    gcTime: POSTCODE_LOCATIONS_GC_MS,
     refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 }
