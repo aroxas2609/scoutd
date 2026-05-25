@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import { passwordResetRedirectUrl } from "@/lib/auth/resolve-app-url";
+import { passwordResetRedirectUrl } from "@/lib/auth/app-url";
 
 export function getPasswordResetRedirectUrl() {
   const origin =

@@ -25,8 +25,3 @@ export async function resolveAppUrl(): Promise<string> {
 
   return fallback;
 }
-
-/** PKCE reset must be started in the browser; callback exchanges ?code= then sends user to /update-password. */
-export function passwordResetRedirectUrl(appOrigin: string) {
-  return `${appOrigin}/auth/callback?type=recovery`;
-}

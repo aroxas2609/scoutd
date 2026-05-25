@@ -73,6 +73,11 @@ export function getAppUrl() {
   );
 }
 
+/** PKCE reset must be started in the browser; callback exchanges ?code= then sends user to /update-password. */
+export function passwordResetRedirectUrl(appOrigin: string) {
+  return `${appOrigin}/auth/callback?type=recovery`;
+}
+
 /** Password-reset and other auth emails — never use localhost on Vercel. */
 export function getAppUrlForAuth() {
   const base = getAppUrl();
