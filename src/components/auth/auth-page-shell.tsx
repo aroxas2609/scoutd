@@ -1,4 +1,4 @@
-import { LogoLink } from "@/components/brand/logo-link";
+import { BrandHeader } from "@/components/brand/brand-header";
 import { cn } from "@/lib/utils";
 
 type AuthPageShellProps = {
@@ -18,7 +18,7 @@ export function AuthPageShell({
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
       <header className="flex shrink-0 justify-center pb-4">
-        <LogoLink href="/" variant="full" size="lg" />
+        <BrandHeader href="/" variant="full" size="lg" align="center" />
       </header>
       <main
         className={cn(

@@ -8,7 +8,7 @@ import { useIsCoachViewer } from "@/features/auth/use-viewer-role";
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 import { appNavTabs, getTabLabel } from "@/components/layout/app-nav-tabs";
 import { prefetchAppTabRoute } from "@/features/navigation/prefetch-app-tabs";
-import { LogoLink } from "@/components/brand/logo-link";
+import { BrandHeader } from "@/components/brand/brand-header";
 
 export function DesktopSidebar({ unreadMessages = 0 }: { unreadMessages?: number }) {
   const pathname = usePathname();
@@ -28,7 +28,7 @@ export function DesktopSidebar({ unreadMessages = 0 }: { unreadMessages?: number
   return (
     <aside className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:border-r lg:border-white/[0.06] lg:bg-[var(--bg-deep)]">
       <div className="flex items-center justify-between gap-2 px-5 py-5">
-        <LogoLink href="/search" variant="full" size="md" />
+        <BrandHeader href="/search" variant="full" size="md" />
         <NotificationDropdown />
       </div>
 

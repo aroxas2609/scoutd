@@ -2,7 +2,7 @@
 import { Logo, type LogoProps } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 
-type LogoLinkProps = LogoProps & {
+export type LogoLinkProps = LogoProps & {
   href?: string;
   className?: string;
 };
