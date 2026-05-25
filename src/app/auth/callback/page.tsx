@@ -38,6 +38,14 @@ function AuthCallbackInner() {
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) {
+          if (target === "/update-password") {
+            router.replace(
+              `/forgot-password?error=${encodeURIComponent(
+                "Open the reset link in the same browser where you requested it, or request a new link."
+              )}`
+            );
+            return;
+          }
           router.replace("/login?error=auth");
           return;
         }

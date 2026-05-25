@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -17,7 +18,9 @@ export default function ForgotPasswordPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           Enter your email and we&apos;ll send a link to reset your password.
         </p>
-        <ForgotPasswordForm />
+        <Suspense fallback={null}>
+          <ForgotPasswordForm />
+        </Suspense>
       </GlassCard>
     </AuthPageShell>
   );

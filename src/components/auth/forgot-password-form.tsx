@@ -1,29 +1,39 @@
 "use client";
 
-import { useState } from "react";
-import { requestPasswordReset } from "@/features/auth/actions";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { requestPasswordResetClient } from "@/features/auth/password-reset-client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PremiumButton } from "@/components/ui/premium-button";
 
 export function ForgotPasswordForm() {
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    const fromCallback = searchParams.get("error");
+    if (fromCallback) setError(fromCallback);
+  }, [searchParams]);
 
   async function handleSubmit(formData: FormData) {
     setError(null);
     setMessage(null);
     setPending(true);
     try {
-      const result = await requestPasswordReset(formData);
-      if (result?.error) {
-        setError(result.error);
+      const email = (formData.get("email") as string)?.trim();
+      if (!email) {
+        setError("Enter your email address");
         return;
       }
-      if (result?.success) {
-        setMessage(result.message);
+      const { error } = await requestPasswordResetClient(email);
+      if (error) {
+        setError(error.message);
+        return;
       }
+      setMessage("If an account exists for that email, we sent a password reset link.");
     } finally {
       setPending(false);
     }

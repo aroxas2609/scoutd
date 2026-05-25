@@ -16,15 +16,35 @@ function UpdatePasswordInner() {
   const searchParams = useSearchParams();
   const [afterSuccess, setAfterSuccess] = useState("/search");
   const [status, setStatus] = useState<"loading" | "ready" | "unauthenticated">("loading");
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
 
     async function establishSession() {
+      const tokenHash = searchParams.get("token_hash");
+      const otpType = searchParams.get("type");
+      if (tokenHash && otpType === "recovery") {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: "recovery",
+        });
+        if (error) {
+          setAuthError(error.message);
+          setStatus("unauthenticated");
+          return;
+        }
+        sessionStorage.setItem(RECOVERY_FLAG, "1");
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+
       const code = searchParams.get("code");
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) {
+          setAuthError(
+            "This reset link could not be verified. Request a new link from the same browser you use to sign in, then open the email there."
+          );
           setStatus("unauthenticated");
           return;
         }
@@ -78,10 +98,13 @@ function UpdatePasswordInner() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/login?redirect=/update-password");
-    }
-  }, [status, router]);
+    if (status !== "unauthenticated") return;
+    const hasRecoveryParams =
+      searchParams.has("code") ||
+      (searchParams.get("type") === "recovery" && searchParams.has("token_hash"));
+    if (hasRecoveryParams || authError) return;
+    router.replace("/login?redirect=/update-password");
+  }, [status, router, searchParams, authError]);
 
   if (status === "loading") {
     return (
@@ -91,8 +114,27 @@ function UpdatePasswordInner() {
     );
   }
 
-  if (status !== "ready") {
-    return null;
+  if (status === "unauthenticated") {
+    return (
+      <AuthPageShell>
+        <GlassCard className="w-full p-8">
+          <h1 className="font-display text-2xl font-bold">Reset link problem</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {authError ??
+              "We could not start a password reset session. Request a new link and open it in the same browser where you submitted the form."}
+          </p>
+          <p className="mt-4 text-sm">
+            <a href="/forgot-password" className="text-[var(--accent-brand)] underline">
+              Request a new reset link
+            </a>
+            {" · "}
+            <a href="/login" className="text-muted-foreground underline">
+              Back to sign in
+            </a>
+          </p>
+        </GlassCard>
+      </AuthPageShell>
+    );
   }
 
   return (

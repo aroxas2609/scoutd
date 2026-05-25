@@ -26,7 +26,7 @@ export async function resolveAppUrl(): Promise<string> {
   return fallback;
 }
 
-/** Supabase appends ?code= for PKCE; must match an allowed Redirect URL in the dashboard. */
+/** PKCE reset must be started in the browser; callback exchanges ?code= then sends user to /update-password. */
 export function passwordResetRedirectUrl(appOrigin: string) {
-  return `${appOrigin}/update-password`;
+  return `${appOrigin}/auth/callback?type=recovery`;
 }

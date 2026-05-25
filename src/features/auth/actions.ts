@@ -3,10 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import {
-  passwordResetRedirectUrl,
-  resolveAppUrl,
-} from "@/lib/auth/resolve-app-url";
 import { getPostLoginRedirect } from "@/lib/auth/redirect-path";
 import type { UserRole } from "@/types/database";
 
@@ -191,23 +187,6 @@ export async function deleteAccount(): Promise<{ error?: string; success?: true 
 
   await supabase.auth.signOut();
   return { success: true };
-}
-
-export async function requestPasswordReset(formData: FormData) {
-  const email = (formData.get("email") as string)?.trim();
-  if (!email) return { error: "Enter your email address" };
-
-  const supabase = await createClient();
-  const appUrl = await resolveAppUrl();
-  const redirectTo = passwordResetRedirectUrl(appUrl);
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-  if (error) return { error: error.message };
-
-  return {
-    success: true as const,
-    message: "If an account exists for that email, we sent a password reset link.",
-  };
 }
 
 export async function updatePassword(formData: FormData) {
