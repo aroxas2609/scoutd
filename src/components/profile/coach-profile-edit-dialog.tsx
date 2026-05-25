@@ -131,6 +131,7 @@ export function CoachProfileEditDialog({ coach, embedded }: CoachProfileEditDial
                 </ProfileFormField>
                 <ProfileFormField
                   label="Club name"
+                  hint="Optional"
                   error={form.formState.errors.clubName?.message}
                 >
                   <Input {...form.register("clubName")} className={profileFieldClass} />

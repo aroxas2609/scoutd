@@ -62,7 +62,7 @@ export const playerOnboardingSchema = z.object({
 
 export const coachOnboardingSchema = z.object({
   coachName: z.string().trim().min(2, "Enter your name as coaches see it in messages"),
-  clubName: z.string().trim().min(2, "Enter your club name"),
+  clubName: z.string().trim().optional(),
   league: z
     .string()
     .trim()

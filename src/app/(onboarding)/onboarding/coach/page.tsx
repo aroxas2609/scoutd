@@ -94,7 +94,11 @@ export default function CoachOnboardingPage() {
                   className={cn("mt-0 bg-white/5", errors.coachName && "border-red-400/50")}
                 />
               </OnboardingField>
-              <OnboardingField label="Club name" error={errors.clubName?.message}>
+              <OnboardingField
+                label="Club name"
+                hint="Optional"
+                error={errors.clubName?.message}
+              >
                 <Input
                   {...form.register("clubName")}
                   className={cn("mt-0 bg-white/5", errors.clubName && "border-red-400/50")}

@@ -73,7 +73,7 @@ export async function completeCoachOnboarding(data: CoachOnboardingInput) {
 
   const { error: coachError } = await supabase.from("coach_profiles").upsert({
     user_id: user.id,
-    club_name: data.clubName.trim(),
+    club_name: data.clubName?.trim() || null,
     league,
     association_id,
     location,
