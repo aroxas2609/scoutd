@@ -7,7 +7,7 @@ export function getPasswordResetRedirectUrl() {
   return passwordResetRedirectUrl(origin);
 }
 
-/** Must run in the browser so the PKCE code verifier is stored for the email link. */
+/** Sends recovery email; link uses token_hash (see docs/auth-password-reset.md). */
 export async function requestPasswordResetClient(email: string) {
   const supabase = createClient();
   const redirectTo = getPasswordResetRedirectUrl();

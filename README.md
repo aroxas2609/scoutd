@@ -55,7 +55,9 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 For local dev on the same Supabase project, add `http://localhost:3000/auth/callback**` and `http://localhost:3000/update-password**` to **Redirect URLs** only — keep **Site URL** on production.
 
-In Vercel env (Production): set `NEXT_PUBLIC_APP_URL` and optionally `APP_URL` to the same `https://…` origin (no trailing slash), then redeploy. Request a **new** reset email after changing Supabase or env vars.
+In Vercel env (Production): set `NEXT_PUBLIC_APP_URL` and optionally `APP_URL` to the same `https://…` origin (no trailing slash), then redeploy.
+
+**PWA / home-screen installs:** Configure the reset email template to use `token_hash` (not PKCE `ConfirmationURL` only). See [docs/auth-password-reset.md](docs/auth-password-reset.md). Request a **new** reset email after changing the template.
 
 ### 4. Run locally
 

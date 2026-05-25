@@ -73,9 +73,9 @@ export function getAppUrl() {
   );
 }
 
-/** PKCE reset must be started in the browser; callback exchanges ?code= then sends user to /update-password. */
+/** Must match Supabase recovery email template (token_hash link). Works from PWA, Safari, or Chrome. */
 export function passwordResetRedirectUrl(appOrigin: string) {
-  return `${appOrigin}/auth/callback?type=recovery`;
+  return `${appOrigin}/update-password`;
 }
 
 /** Password-reset and other auth emails — never use localhost on Vercel. */
