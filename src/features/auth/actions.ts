@@ -111,6 +111,65 @@ async function removeUserAvatarStorage(
   await admin.storage.from("avatars").remove(paths);
 }
 
+async function deleteAuthUserById(userId: string): Promise<{ error?: string }> {
+  const admin = await createServiceClient();
+
+  await admin
+    .from("verification_requests")
+    .update({ reviewed_by: null })
+    .eq("reviewed_by", userId);
+
+  await admin.from("featured_entities").delete().eq("entity_id", userId);
+
+  try {
+    await removeUserAvatarStorage(admin, userId);
+  } catch {
+    // Storage cleanup is best-effort; auth delete still proceeds
+  }
+
+  const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
+  if (deleteError) return { error: deleteError.message };
+  return {};
+}
+
+/**
+ * Cancels an in-progress signup (before onboarding_complete).
+ * Removes the auth user when the service role key is configured; otherwise signs out only.
+ */
+export async function abandonIncompleteSetup(): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return {};
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("onboarding_complete")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || profile.onboarding_complete) {
+    await supabase.auth.signOut();
+    return {};
+  }
+
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey || serviceKey.includes("placeholder")) {
+    await supabase.auth.signOut();
+    return {
+      error:
+        "Signed out, but your unfinished account could not be removed. Use a different email, or configure SUPABASE_SERVICE_ROLE_KEY to restart with the same email.",
+    };
+  }
+
+  const removed = await deleteAuthUserById(user.id);
+  if (removed.error) return removed;
+
+  await supabase.auth.signOut();
+  return {};
+}
+
 /** Permanently deletes the signed-in user from Auth and all related DB rows. */
 export async function deleteAccount(): Promise<{ error?: string; success?: true }> {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -127,23 +186,8 @@ export async function deleteAccount(): Promise<{ error?: string; success?: true 
   } = await supabase.auth.getUser();
   if (!user) return { error: "Sign in to delete your account" };
 
-  const admin = await createServiceClient();
-
-  await admin
-    .from("verification_requests")
-    .update({ reviewed_by: null })
-    .eq("reviewed_by", user.id);
-
-  await admin.from("featured_entities").delete().eq("entity_id", user.id);
-
-  try {
-    await removeUserAvatarStorage(admin, user.id);
-  } catch {
-    // Storage cleanup is best-effort; auth delete still proceeds
-  }
-
-  const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
-  if (deleteError) return { error: deleteError.message };
+  const removed = await deleteAuthUserById(user.id);
+  if (removed.error) return removed;
 
   await supabase.auth.signOut();
   return { success: true };

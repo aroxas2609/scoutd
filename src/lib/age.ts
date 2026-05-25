@@ -1,7 +1,8 @@
 import { differenceInYears, isValid, parseISO, subYears, format } from "date-fns";
 
-export const MIN_PLAYER_AGE = 14;
-export const MAX_PLAYER_AGE = 50;
+/** Inclusive min/max for player date of birth (full years as of today). */
+export const MIN_PLAYER_AGE = 5;
+export const MAX_PLAYER_AGE = 70;
 
 export function calculateAge(dateOfBirth: Date, asOf = new Date()): number {
   return differenceInYears(asOf, dateOfBirth);

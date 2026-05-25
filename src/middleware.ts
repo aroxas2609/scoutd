@@ -76,6 +76,16 @@ export async function middleware(request: NextRequest) {
         }
         return supabaseResponse;
       }
+      if (path === "/signup") {
+        if (!user) return supabaseResponse;
+        if (!profile?.onboarding_complete) return supabaseResponse;
+        if (shouldRedirect(path, "/search")) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/search";
+          return NextResponse.redirect(url);
+        }
+        return supabaseResponse;
+      }
       const authTarget = getPostLoginRedirect(profile);
       if (shouldRedirect(path, authTarget)) {
         const url = request.nextUrl.clone();

@@ -10,7 +10,7 @@ export default function LoginPage() {
       footer={
         <>
           New here?{" "}
-          <Link href="/signup" className="font-medium text-[var(--accent-brand)]">
+          <Link href="/signup?fresh=1" className="font-medium text-[var(--accent-brand)]">
             Create account
           </Link>
         </>

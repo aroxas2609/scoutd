@@ -73,7 +73,7 @@ export function WelcomeScreen() {
       </main>
 
       <footer className="shrink-0 space-y-3 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2">
-        <Link href="/signup" className="block">
+        <Link href="/signup?fresh=1" className="block">
           <PremiumButton size="lg" className="h-12 w-full gap-2 text-base">
             Get started
             <ArrowRight className="h-4 w-4" />

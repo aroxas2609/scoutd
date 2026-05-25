@@ -8,10 +8,21 @@ import { PremiumButton } from "@/components/ui/premium-button";
 
 export function SignupForm() {
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
   async function handleSubmit(formData: FormData) {
-    const result = await signUp(formData);
-    if (result?.error) setError(result.error);
+    setError(null);
+    setPending(true);
+    try {
+      const result = await signUp(formData);
+      if (result?.error) {
+        setError(result.error);
+        setPending(false);
+      }
+    } catch {
+      setError("Could not create your account. Please try again.");
+      setPending(false);
+    }
   }
 
   return (
@@ -32,8 +43,8 @@ export function SignupForm() {
         />
       </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
-      <PremiumButton type="submit" className="w-full">
-        Create account
+      <PremiumButton type="submit" className="w-full" loading={pending}>
+        {pending ? "Creating account…" : "Create account"}
       </PremiumButton>
     </form>
   );

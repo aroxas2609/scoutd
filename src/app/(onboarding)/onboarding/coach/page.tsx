@@ -28,6 +28,7 @@ export default function CoachOnboardingPage() {
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [stepBusy, setStepBusy] = useState(false);
 
   const form = useForm<CoachOnboardingInput>({
     resolver: zodResolver(coachOnboardingSchema),
@@ -39,9 +40,14 @@ export default function CoachOnboardingPage() {
 
   async function goToStep1() {
     setError(null);
-    const ok = await form.trigger(COACH_ONBOARDING_STEP_FIELDS[0]);
-    if (!ok) return;
-    setStep(1);
+    setStepBusy(true);
+    try {
+      const ok = await form.trigger(COACH_ONBOARDING_STEP_FIELDS[0]);
+      if (!ok) return;
+      setStep(1);
+    } finally {
+      setStepBusy(false);
+    }
   }
 
   async function onSubmit(data: CoachOnboardingInput) {
@@ -202,7 +208,7 @@ export default function CoachOnboardingPage() {
                 type="button"
                 variant="outline"
                 className="flex-1 border-white/20"
-                disabled={submitting}
+                disabled={submitting || stepBusy}
                 onClick={() => {
                   setError(null);
                   setStep(0);
@@ -215,24 +221,33 @@ export default function CoachOnboardingPage() {
                 type="button"
                 variant="outline"
                 className="flex-1 border-white/20"
-                disabled={submitting}
+                disabled={submitting || stepBusy}
+                loading={stepBusy}
                 onClick={() => {
                   setError(null);
-                  void goBackToRoleSelection();
+                  setStepBusy(true);
+                  void goBackToRoleSelection().finally(() => setStepBusy(false));
                 }}
               >
                 Change role
               </PremiumButton>
             )}
             {step === 0 ? (
-              <PremiumButton type="button" className="flex-1" onClick={() => void goToStep1()}>
-                Continue
+              <PremiumButton
+                type="button"
+                className="flex-1"
+                loading={stepBusy}
+                disabled={stepBusy}
+                onClick={() => void goToStep1()}
+              >
+                {stepBusy ? "Checking…" : "Continue"}
               </PremiumButton>
             ) : (
               <PremiumButton
                 type="button"
                 className="flex-1"
-                disabled={submitting}
+                loading={submitting}
+                disabled={submitting || stepBusy}
                 onClick={() => void form.handleSubmit(onSubmit)()}
               >
                 {submitting ? "Launching…" : "Launch club profile"}

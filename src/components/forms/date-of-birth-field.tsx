@@ -48,6 +48,9 @@ export function DateOfBirthField({
           "[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0",
           "[&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-11",
           "[&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0",
+          // Hide native empty-state "dd/mm/yyyy" — we render a single custom placeholder below.
+          !value &&
+            "[&::-webkit-datetime-edit]:opacity-0 [&::-webkit-datetime-edit-fields-wrapper]:opacity-0",
           error && "border-red-400/50"
         )}
         style={{ WebkitAppearance: "none", appearance: "none" } as React.CSSProperties}

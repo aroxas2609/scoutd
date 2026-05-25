@@ -170,7 +170,7 @@ export function CtaSection() {
       <GlassCard glow className="mx-auto max-w-4xl p-12 text-center">
         <h2 className="font-display text-3xl font-bold sm:text-4xl">Ready to get discovered?</h2>
         <p className="mt-4 text-muted-foreground">Join thousands of players and coaches on Scoutd.</p>
-        <Link href="/signup" className="mt-8 inline-block">
+        <Link href="/signup?fresh=1" className="mt-8 inline-block">
           <PremiumButton size="lg">Start free</PremiumButton>
         </Link>
       </GlassCard>
@@ -186,7 +186,7 @@ export function MarketingFooter() {
         <p className="text-sm text-muted-foreground">Find Your Next Player. © {new Date().getFullYear()}</p>
         <div className="flex gap-6 text-sm text-muted-foreground">
           <Link href="/login">Login</Link>
-          <Link href="/signup">Sign up</Link>
+          <Link href="/signup?fresh=1">Sign up</Link>
         </div>
       </div>
     </footer>
@@ -202,7 +202,7 @@ export function MarketingHeader() {
           <Link href="/login" className="text-sm text-muted-foreground hover:text-white">
             Sign in
           </Link>
-          <Link href="/signup">
+          <Link href="/signup?fresh=1">
             <PremiumButton size="sm">Get Started</PremiumButton>
           </Link>
         </div>

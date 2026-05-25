@@ -96,7 +96,7 @@ export function LoginForm() {
         />
       </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
-      <PremiumButton type="submit" className="w-full" disabled={pending}>
+      <PremiumButton type="submit" className="w-full" loading={pending}>
         {pending ? "Signing in…" : "Sign in"}
       </PremiumButton>
     </form>

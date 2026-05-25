@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { isPlayerAgeInRange, parseDateOfBirth } from "@/lib/age";
+import {
+  isPlayerAgeInRange,
+  MAX_PLAYER_AGE,
+  MIN_PLAYER_AGE,
+  parseDateOfBirth,
+} from "@/lib/age";
 import { AGE_GROUP_CODES } from "@/lib/football/age-groups";
 import { isMetroAssociation } from "@/lib/football/metro-nsw-associations";
 import { FOOTBALL_POSITION_VALUES } from "@/lib/football/positions";
@@ -21,7 +26,7 @@ export const playerOnboardingSchema = z.object({
     .refine((v) => {
       const dob = parseDateOfBirth(v);
       return dob ? isPlayerAgeInRange(dob) : false;
-    }, "You must be between 14 and 50 years old"),
+    }, `You must be between ${MIN_PLAYER_AGE} and ${MAX_PLAYER_AGE} years old`),
   locationSuburb: z.string().trim().min(1, "Select your suburb"),
   locationState: z.string().trim().min(1, "Select your suburb"),
   postcode: z
