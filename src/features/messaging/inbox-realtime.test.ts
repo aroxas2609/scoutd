@@ -23,9 +23,9 @@ describe("inbox-realtime", () => {
     expect(chunks[1]).toHaveLength(5);
   });
 
-  it("builds in filter for realtime", () => {
+  it("builds in filter for realtime with quoted UUIDs", () => {
     const id = "00000000-0000-4000-8000-000000000001";
-    expect(messagesInFilter([id])).toBe(`conversation_id=in.(${id})`);
+    expect(messagesInFilter([id])).toBe(`conversation_id=in.("${id}")`);
   });
 
   it("stable subscription key regardless of order", () => {

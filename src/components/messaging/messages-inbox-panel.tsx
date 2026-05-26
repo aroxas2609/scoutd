@@ -13,7 +13,7 @@ import { ConversationListItem } from "@/components/messaging/conversation-list-i
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { PageLoader } from "@/components/ui/page-loader";
 import { EnablePushBanner } from "@/components/push/enable-push-banner";
-import { useViewerRole } from "@/features/auth/use-viewer-role";
+import { useAuthUserId } from "@/features/auth/use-viewer-role";
 import { cn } from "@/lib/utils";
 
 type MessagesInboxPanelProps = {
@@ -25,9 +25,13 @@ export function MessagesInboxPanel({ variant = "page" }: MessagesInboxPanelProps
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const [inboxFilter, setInboxFilter] = useState<ConversationInboxFilter>("active");
-  const { data: conversations, isLoading } = useConversations(inboxFilter);
+  const { data: conversations, isLoading, isError, error: loadError } = useConversations(
+    inboxFilter,
+    { refetchInterval: 30_000 }
+  );
   const { data: archivedList } = useConversations("archived", {
     enabled: inboxFilter === "archived",
+    refetchInterval: inboxFilter === "archived" ? 30_000 : false,
   });
 
   const inboxRealtimeConversationIds = useMemo(() => {
@@ -39,8 +43,7 @@ export function MessagesInboxPanel({ variant = "page" }: MessagesInboxPanelProps
   }, [conversations, archivedList, inboxFilter]);
 
   useMessagingInboxRealtime(inboxRealtimeConversationIds);
-  const { data: viewer } = useViewerRole();
-  const userId = viewer?.userId ?? null;
+  const { data: userId } = useAuthUserId();
 
   const totalUnread = conversations?.reduce((n, c) => n + c.unread_count, 0) ?? 0;
   const archivedCount =
@@ -112,7 +115,12 @@ export function MessagesInboxPanel({ variant = "page" }: MessagesInboxPanelProps
         ) : null}
 
         <div className={cn("min-h-0 flex-1 overflow-y-auto", isSidebar && "px-1")}>
-          {isLoading ? (
+          {isError ? (
+            <p className="py-12 px-4 text-center text-sm text-red-300">
+              Could not load conversations.
+              {loadError instanceof Error ? ` ${loadError.message}` : null}
+            </p>
+          ) : isLoading ? (
             <PageLoader />
           ) : !conversations?.length ? (
             inboxFilter === "archived" ? (
@@ -122,15 +130,13 @@ export function MessagesInboxPanel({ variant = "page" }: MessagesInboxPanelProps
             ) : (
               <MessagesEmptyState />
             )
-          ) : !userId ? (
-            <PageLoader />
           ) : (
             <ul className="divide-y divide-white/[0.06]">
               {conversations.map((item) => (
                 <ConversationListItem
                   key={item.conversation_id}
                   item={item}
-                  currentUserId={userId}
+                  currentUserId={userId ?? ""}
                   inboxFilter={inboxFilter}
                 />
               ))}

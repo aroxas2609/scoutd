@@ -39,7 +39,7 @@ export async function fetchViewerRole() {
   };
 }
 
-function useAuthUserIdQuery() {
+export function useAuthUserId() {
   return useQuery({
     queryKey: AUTH_USER_ID_KEY,
     queryFn: fetchAuthUserId,
@@ -47,6 +47,10 @@ function useAuthUserIdQuery() {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
+}
+
+function useAuthUserIdQuery() {
+  return useAuthUserId();
 }
 
 export function useViewerRole() {

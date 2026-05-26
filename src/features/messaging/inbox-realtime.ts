@@ -14,9 +14,18 @@ export function chunkConversationIds(ids: string[]): string[][] {
   return chunks;
 }
 
+/** PostgREST Realtime `in` filter for UUID columns (quoted values). */
 export function messagesInFilter(conversationIds: string[]): string {
-  return `conversation_id=in.(${conversationIds.join(",")})`;
+  const quoted = conversationIds.map((id) => `"${id}"`).join(",");
+  return `conversation_id=in.(${quoted})`;
 }
+
+export function messageEqFilter(conversationId: string): string {
+  return `conversation_id=eq.${conversationId}`;
+}
+
+/** Prefer per-thread `eq` filters (reliable); use `in` only for larger lists. */
+export const INBOX_REALTIME_EQ_CHANNEL_LIMIT = 25;
 
 export function inboxRealtimeSubscriptionKey(conversationIds: string[]): string {
   return uniqueConversationIds(conversationIds).sort().join(",");

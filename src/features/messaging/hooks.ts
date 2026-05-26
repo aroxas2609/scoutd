@@ -30,8 +30,11 @@ import {
 import { sumUnreadFromPreviews } from "./unread-count";
 import {
   chunkConversationIds,
+  INBOX_REALTIME_EQ_CHANNEL_LIMIT,
   inboxRealtimeSubscriptionKey,
+  messageEqFilter,
   messagesInFilter,
+  uniqueConversationIds,
 } from "./inbox-realtime";
 
 export type ConversationInboxFilter = "active" | "archived";
@@ -108,7 +111,7 @@ export const fetchConversationsForUser = fetchConversationPreviews;
 
 export function useConversations(
   inboxFilter: ConversationInboxFilter = "active",
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean; refetchInterval?: number | false }
 ) {
   const supabase = createClient();
   const qc = useQueryClient();
@@ -118,6 +121,7 @@ export function useConversations(
     queryKey: ["conversations", inboxFilter],
     enabled,
     staleTime: 30_000,
+    refetchInterval: options?.refetchInterval,
     queryFn: async () => {
       const session = await resolveAuthSession(qc);
       if (!session) return [];
@@ -142,19 +146,19 @@ export function useMessagingInboxRealtime(conversationIds: string[]) {
   useEffect(() => {
     if (!subscriptionKey) return;
 
-    const chunks = chunkConversationIds(conversationIds);
+    const ids = uniqueConversationIds(conversationIds);
     const channels: RealtimeChannel[] = [];
 
-    for (let i = 0; i < chunks.length; i++) {
+    function attachChannel(name: string, filter: string) {
       const channel = supabase
-        .channel(`conversations-inbox-${i}`)
+        .channel(name)
         .on(
           "postgres_changes",
           {
             event: "*",
             schema: "public",
             table: "messages",
-            filter: messagesInFilter(chunks[i]),
+            filter,
           },
           () => {
             scheduleMessagingInboxRefresh(qc);
@@ -162,6 +166,17 @@ export function useMessagingInboxRealtime(conversationIds: string[]) {
         )
         .subscribe();
       channels.push(channel);
+    }
+
+    if (ids.length <= INBOX_REALTIME_EQ_CHANNEL_LIMIT) {
+      for (const id of ids) {
+        attachChannel(`conversations-inbox-${id.slice(0, 8)}`, messageEqFilter(id));
+      }
+    } else {
+      const chunks = chunkConversationIds(ids);
+      for (let i = 0; i < chunks.length; i++) {
+        attachChannel(`conversations-inbox-${i}`, messagesInFilter(chunks[i]));
+      }
     }
 
     return () => {
