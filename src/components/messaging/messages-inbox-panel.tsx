@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/layout/app-header";
 import {
@@ -25,11 +25,20 @@ export function MessagesInboxPanel({ variant = "page" }: MessagesInboxPanelProps
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const [inboxFilter, setInboxFilter] = useState<ConversationInboxFilter>("active");
-  useMessagingInboxRealtime();
   const { data: conversations, isLoading } = useConversations(inboxFilter);
   const { data: archivedList } = useConversations("archived", {
     enabled: inboxFilter === "archived",
   });
+
+  const inboxRealtimeConversationIds = useMemo(() => {
+    const ids = (conversations ?? []).map((c) => c.conversation_id);
+    if (inboxFilter === "archived" && archivedList?.length) {
+      for (const c of archivedList) ids.push(c.conversation_id);
+    }
+    return ids;
+  }, [conversations, archivedList, inboxFilter]);
+
+  useMessagingInboxRealtime(inboxRealtimeConversationIds);
   const { data: viewer } = useViewerRole();
   const userId = viewer?.userId ?? null;
 

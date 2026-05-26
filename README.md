@@ -33,6 +33,8 @@ npx supabase db push
 
 Or paste [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql) in the SQL editor.
 
+4. **Realtime:** In the Dashboard → **Database** → **Publications** → `supabase_realtime`, include only `messages` and `trial_invites` (not **Replication**, which is for read replicas — see [docs/performance-baseline.md](docs/performance-baseline.md)).
+
 5. Create storage buckets: `avatars`, `banners`, `highlights`, `club-assets` (public read policies as needed).
 
 ### 3. Environment variables

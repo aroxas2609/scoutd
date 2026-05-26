@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { resolveAuthSession } from "@/lib/auth/resolve-auth-session";
@@ -28,6 +28,11 @@ import {
   type ConversationPreviewRpcRow,
 } from "./conversation-previews-rpc";
 import { sumUnreadFromPreviews } from "./unread-count";
+import {
+  chunkConversationIds,
+  inboxRealtimeSubscriptionKey,
+  messagesInFilter,
+} from "./inbox-realtime";
 
 export type ConversationInboxFilter = "active" | "archived";
 
@@ -112,6 +117,7 @@ export function useConversations(
   return useQuery({
     queryKey: ["conversations", inboxFilter],
     enabled,
+    staleTime: 30_000,
     queryFn: async () => {
       const session = await resolveAuthSession(qc);
       if (!session) return [];
@@ -121,40 +127,50 @@ export function useConversations(
   });
 }
 
-/** Call once on the messages inbox page (avoids duplicate channel subscriptions). */
-export function useMessagingInboxRealtime() {
+/**
+ * Live inbox updates scoped to the user's conversations (not all messages on the project).
+ * Call once on the messages inbox page with IDs from loaded conversation previews.
+ */
+export function useMessagingInboxRealtime(conversationIds: string[]) {
   const supabase = createClient();
   const qc = useQueryClient();
+  const subscriptionKey = useMemo(
+    () => inboxRealtimeSubscriptionKey(conversationIds),
+    [conversationIds]
+  );
 
   useEffect(() => {
-    inboxRealtimeRefCount += 1;
+    if (!subscriptionKey) return;
 
-    if (!inboxRealtimeChannel) {
-      inboxRealtimeChannel = supabase
-        .channel("conversations-inbox")
+    const chunks = chunkConversationIds(conversationIds);
+    const channels: RealtimeChannel[] = [];
+
+    for (let i = 0; i < chunks.length; i++) {
+      const channel = supabase
+        .channel(`conversations-inbox-${i}`)
         .on(
           "postgres_changes",
-          { event: "*", schema: "public", table: "messages" },
+          {
+            event: "*",
+            schema: "public",
+            table: "messages",
+            filter: messagesInFilter(chunks[i]),
+          },
           () => {
             scheduleMessagingInboxRefresh(qc);
           }
         )
         .subscribe();
+      channels.push(channel);
     }
 
     return () => {
-      inboxRealtimeRefCount -= 1;
-      if (inboxRealtimeRefCount <= 0 && inboxRealtimeChannel) {
-        void supabase.removeChannel(inboxRealtimeChannel);
-        inboxRealtimeChannel = null;
-        inboxRealtimeRefCount = 0;
+      for (const channel of channels) {
+        void supabase.removeChannel(channel);
       }
     };
-  }, [supabase, qc]);
+  }, [subscriptionKey, supabase, qc]);
 }
-
-let inboxRealtimeRefCount = 0;
-let inboxRealtimeChannel: RealtimeChannel | null = null;
 
 async function fetchUnreadMessageCount(
   supabase: ReturnType<typeof createClient>,
