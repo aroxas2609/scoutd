@@ -34,7 +34,6 @@ import {
   inboxRealtimeSubscriptionKey,
   messageEqFilter,
   messagesInFilter,
-  uniqueConversationIds,
 } from "./inbox-realtime";
 
 export type ConversationInboxFilter = "active" | "archived";
@@ -146,43 +145,52 @@ export function useMessagingInboxRealtime(conversationIds: string[]) {
   useEffect(() => {
     if (!subscriptionKey) return;
 
-    const ids = uniqueConversationIds(conversationIds);
-    const channels: RealtimeChannel[] = [];
+    const ids = subscriptionKey.split(",").filter(Boolean);
+    const channelName = "conversations-inbox";
 
-    function attachChannel(name: string, filter: string) {
-      const channel = supabase
-        .channel(name)
-        .on(
+    for (const existing of supabase.getChannels()) {
+      if (existing.topic === `realtime:${channelName}`) {
+        void supabase.removeChannel(existing);
+      }
+    }
+
+    let channel: RealtimeChannel = supabase.channel(channelName);
+    const onMessage = () => {
+      scheduleMessagingInboxRefresh(qc);
+    };
+
+    if (ids.length <= INBOX_REALTIME_EQ_CHANNEL_LIMIT) {
+      for (const id of ids) {
+        channel = channel.on(
           "postgres_changes",
           {
             event: "*",
             schema: "public",
             table: "messages",
-            filter,
+            filter: messageEqFilter(id),
           },
-          () => {
-            scheduleMessagingInboxRefresh(qc);
-          }
-        )
-        .subscribe();
-      channels.push(channel);
-    }
-
-    if (ids.length <= INBOX_REALTIME_EQ_CHANNEL_LIMIT) {
-      for (const id of ids) {
-        attachChannel(`conversations-inbox-${id.slice(0, 8)}`, messageEqFilter(id));
+          onMessage
+        );
       }
     } else {
-      const chunks = chunkConversationIds(ids);
-      for (let i = 0; i < chunks.length; i++) {
-        attachChannel(`conversations-inbox-${i}`, messagesInFilter(chunks[i]));
+      for (const chunk of chunkConversationIds(ids)) {
+        channel = channel.on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "messages",
+            filter: messagesInFilter(chunk),
+          },
+          onMessage
+        );
       }
     }
 
+    channel.subscribe();
+
     return () => {
-      for (const channel of channels) {
-        void supabase.removeChannel(channel);
-      }
+      void supabase.removeChannel(supabase.channel(channelName));
     };
   }, [subscriptionKey, supabase, qc]);
 }
